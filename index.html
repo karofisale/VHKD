@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trung Tâm Vận Hành Karofi</title>
+<style>
+  :root {
+    --bg: #F2F4F1;
+    --bg-elevated: #FFFFFF;
+    --bg-sunken: #E7EAE5;
+    --ink: #1A211E;
+    --ink-soft: #545F5A;
+    --ink-faint: #8A938D;
+    --line: #DBDFD8;
+    --line-soft: #E9ECE6;
+    --accent: #0E6E64;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #E1EFEB;
+    --accent-strong: #0A5049;
+    --warm: #B5691F;
+    --warm-soft: #F5E7D6;
+    --success: #2E7D46;
+    --warning: #9C6B0B;
+    --critical: #B3432B;
+    --shadow: 0 1px 2px rgba(26,33,30,0.04), 0 4px 16px rgba(26,33,30,0.06);
+    --font-display: Cambria, Georgia, 'Times New Roman', serif;
+    --font-body: 'Source Sans 3', 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-mono: 'IBM Plex Mono', Consolas, 'SFMono-Regular', Menlo, monospace;
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121614;
+      --bg-elevated: #1A201D;
+      --bg-sunken: #0D110F;
+      --ink: #E8ECE8;
+      --ink-soft: #A2ACA6;
+      --ink-faint: #6D766F;
+      --line: #2A322D;
+      --line-soft: #232B26;
+      --accent: #4FBBAA;
+      --accent-ink: #06201C;
+      --accent-soft: #1B302C;
+      --accent-strong: #6ED0C0;
+      --warm: #E2954F;
+      --warm-soft: #33271A;
+      --success: #4CAF6B;
+      --warning: #D9A441;
+      --critical: #E2725A;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121614; --bg-elevated: #1A201D; --bg-sunken: #0D110F;
+    --ink: #E8ECE8; --ink-soft: #A2ACA6; --ink-faint: #6D766F;
+    --line: #2A322D; --line-soft: #232B26;
+    --accent: #4FBBAA; --accent-ink: #06201C; --accent-soft: #1B302C; --accent-strong: #6ED0C0;
+    --warm: #E2954F; --warm-soft: #33271A;
+    --success: #4CAF6B; --warning: #D9A441; --critical: #E2725A;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+  }
+  :root[data-theme="light"] {
+    --bg: #F2F4F1; --bg-elevated: #FFFFFF; --bg-sunken: #E7EAE5;
+    --ink: #1A211E; --ink-soft: #545F5A; --ink-faint: #8A938D;
+    --line: #DBDFD8; --line-soft: #E9ECE6;
+    --accent: #0E6E64; --accent-ink: #FFFFFF; --accent-soft: #E1EFEB; --accent-strong: #0A5049;
+    --warm: #B5691F; --warm-soft: #F5E7D6;
+    --success: #2E7D46; --warning: #9C6B0B; --critical: #B3432B;
+    --shadow: 0 1px 2px rgba(26,33,30,0.04), 0 4px 16px rgba(26,33,30,0.06);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--accent-soft); }
+
+  .app {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .rail {
+    flex: 0 0 252px;
+    background: var(--bg-elevated);
+    border-right: 1px solid var(--line);
+    padding: 22px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .rail-head {
+    padding: 4px 10px 18px;
+    border-bottom: 1px solid var(--line-soft);
+    margin-bottom: 14px;
+  }
+  .rail-head .org {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .rail-head h1 {
+    font-family: var(--font-display);
+    font-size: 21px;
+    font-weight: 600;
+    margin: 6px 0 0;
+    line-height: 1.25;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+  .rail-nav { display: flex; flex-direction: column; gap: 2px; }
+  .rail-btn {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    padding: 10px 10px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s ease, color 0.12s ease;
+  }
+  .rail-btn:hover { background: var(--bg-sunken); color: var(--ink); }
+  .rail-btn.active { background: var(--accent-soft); color: var(--accent-strong); }
+  .rail-btn .count {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .rail-btn.active .count { color: var(--accent-strong); opacity: 0.75; }
+
+  .rail-foot {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .add-btn {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px dashed var(--line);
+    background: transparent;
+    color: var(--ink-soft);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.12s ease, color 0.12s ease;
+  }
+  .add-btn:hover { border-color: var(--accent); color: var(--accent-strong); }
+  .rail-note {
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    margin: 10px 2px 0;
+    line-height: 1.45;
+  }
+
+  /* ---------- Main ---------- */
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .topbar {
+    padding: 28px 36px 0;
+  }
+  .topbar .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+  }
+  .topbar h2 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 600;
+    margin: 6px 0 6px;
+    text-wrap: balance;
+  }
+  .topbar p {
+    margin: 0 0 18px;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    font-size: 14px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 0 36px;
+    border-bottom: 1px solid var(--line);
+  }
+  .tab {
+    padding: 9px 14px;
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.12s ease, border-color 0.12s ease;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.active { color: var(--accent-strong); border-bottom-color: var(--accent); }
+
+  .content { padding: 26px 36px 60px; flex: 1; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
+    align-items: start;
+  }
+
+  .card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .card-body { padding: 16px 18px; }
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .card h3 {
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    line-height: 1.35;
+  }
+  .chip {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.03em;
+    padding: 3px 7px;
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+  .chip.skill { background: var(--accent-soft); color: var(--accent-strong); }
+  .chip.tool { background: var(--warm-soft); color: var(--warm); }
+  .chip.generic { background: var(--bg-sunken); color: var(--ink-faint); border: 1px solid var(--line); }
+  .card p.desc {
+    margin: 0 0 14px;
+    color: var(--ink-soft);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .card-actions { display: flex; gap: 8px; }
+  .btn {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: filter 0.12s ease, background 0.12s ease;
+  }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); }
+  .btn-primary:hover { filter: brightness(1.06); }
+  .btn-ghost { background: transparent; color: var(--ink-soft); border-color: var(--line); }
+  .btn-ghost:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .btn-link {
+    background: transparent; color: var(--accent-strong); border: 1px solid var(--line);
+    text-decoration: none; display: inline-flex; align-items: center;
+  }
+  .btn-link:hover { border-color: var(--accent); }
+  .btn-danger-text {
+    background: none; border: none; color: var(--ink-faint); font-size: 11.5px;
+    cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px;
+  }
+  .btn-danger-text:hover { color: var(--critical); }
+
+  .panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.22s ease;
+    border-top: 1px solid var(--line-soft);
+    background: var(--bg-sunken);
+  }
+  .panel.open { max-height: 640px; }
+  .panel-inner { padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .field label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  .field input, .field textarea {
+    width: 100%;
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    color: var(--ink);
+    resize: vertical;
+  }
+  .field textarea { min-height: 58px; }
+  .field input:focus, .field textarea:focus, button:focus-visible, .tab:focus-visible, .rail-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .preview {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--ink);
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 10px 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.5;
+  }
+  .preview.path { font-size: 12px; overflow-x: auto; white-space: nowrap; }
+  .panel-actions { display: flex; align-items: center; gap: 10px; }
+  .copied-flag {
+    font-size: 12px; color: var(--success); font-weight: 700;
+    opacity: 0; transition: opacity 0.15s ease;
+  }
+  .copied-flag.show { opacity: 1; }
+  .howto { font-size: 12px; color: var(--ink-faint); }
+
+  .group-desc-tab {
+    margin: 14px 0 4px;
+    color: var(--ink-faint);
+    font-size: 12.5px;
+  }
+
+  /* ---------- Modal ---------- */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(10,14,12,0.45);
+    display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--bg-elevated);
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    width: 100%; max-width: 480px;
+    max-height: 88vh; overflow-y: auto;
+    box-shadow: var(--shadow);
+    padding: 22px 24px 24px;
+  }
+  .modal h3 { font-family: var(--font-display); font-size: 19px; margin: 0 0 4px; }
+  .modal .sub { color: var(--ink-faint); font-size: 12.5px; margin: 0 0 16px; }
+  .modal .field { margin-bottom: 12px; }
+  .modal select {
+    width: 100%; font-family: var(--font-body); font-size: 13.5px; padding: 8px 10px;
+    border-radius: 6px; border: 1px solid var(--line); background: var(--bg-elevated); color: var(--ink);
+  }
+  .kind-toggle { display: flex; gap: 6px; margin-bottom: 4px; }
+  .kind-toggle button {
+    flex: 1; padding: 7px; border-radius: 6px; border: 1px solid var(--line);
+    background: var(--bg-sunken); color: var(--ink-soft); font-size: 12.5px; font-weight: 700; cursor: pointer;
+  }
+  .kind-toggle button.active { background: var(--accent-soft); color: var(--accent-strong); border-color: var(--accent); }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+  .hint { font-size: 11.5px; color: var(--ink-faint); margin-top: -6px; }
+
+  .toast {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(12px);
+    background: var(--ink); color: var(--bg);
+    padding: 10px 18px; border-radius: 100px; font-size: 13px; font-weight: 600;
+    opacity: 0; pointer-events: none; transition: opacity 0.18s ease, transform 0.18s ease;
+    z-index: 60;
+  }
+  :root[data-theme="dark"] .toast, @media (prefers-color-scheme: dark) { }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .empty {
+    padding: 40px 20px; text-align: center; color: var(--ink-faint); font-size: 13.5px;
+    border: 1px dashed var(--line); border-radius: var(--radius);
+  }
+
+  @media (max-width: 780px) {
+    .app { flex-direction: column; }
+    .rail { flex: none; width: 100%; border-right: none; border-bottom: 1px solid var(--line); flex-direction: row; align-items: center; overflow-x: auto; padding: 12px; }
+    .rail-head { display: none; }
+    .rail-nav { flex-direction: row; }
+    .rail-btn { white-space: nowrap; }
+    .rail-foot { margin-top: 0; margin-left: 8px; border-top: none; padding-top: 0; flex: none; }
+    .rail-note { display: none; }
+    .topbar, .tabs, .content { padding-left: 18px; padding-right: 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <div class="rail-head">
+      <div class="org">Karofi · Vận hành Kinh doanh</div>
+      <h1>Trung Tâm Vận Hành Karofi</h1>
+    </div>
+    <nav class="rail-nav" id="railNav"></nav>
+    <div class="rail-foot">
+      <button class="add-btn" id="openAddModal" type="button">+ Thêm kỹ năng / công cụ</button>
+      <p class="rail-note">Mục tự thêm chỉ lưu trên trình duyệt này. Để mọi người cùng thấy, nhờ Claude Code sửa thẳng vào file và xuất bản lại.</p>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="eyebrow" id="groupEyebrow">Nhóm công việc</div>
+      <h2 id="groupTitle">—</h2>
+      <p id="groupDesc"></p>
+    </div>
+    <div class="tabs" id="taskTabs"></div>
+    <div class="content">
+      <p class="group-desc-tab" id="taskDesc"></p>
+      <div class="grid" id="cardGrid"></div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="addModalBackdrop">
+  <div class="modal">
+    <h3>Thêm kỹ năng / công cụ</h3>
+    <p class="sub">Lưu ngay trên trình duyệt này (localStorage) — dùng để bổ sung nhanh khi bạn vừa tạo thêm skill hoặc công cụ mới trong Cowork.</p>
+
+    <div class="field">
+      <label>Loại mục</label>
+      <div class="kind-toggle">
+        <button type="button" id="kindSkillBtn" class="active" data-kind="skill">Kỹ năng (có tham số)</button>
+        <button type="button" id="kindToolBtn" data-kind="tool">Công cụ (có đường dẫn/URL)</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Nhóm công việc</label>
+      <select id="fGroup"></select>
+    </div>
+    <div class="field">
+      <label>Đầu mục công việc (tab)</label>
+      <input id="fTask" type="text" placeholder="VD: Báo cáo tồn kho tuần" />
+    </div>
+    <div class="field">
+      <label>Tên hiển thị</label>
+      <input id="fTitle" type="text" placeholder="VD: Tổng hợp tồn kho tuần" />
+    </div>
+    <div class="field">
+      <label>Mô tả ngắn</label>
+      <input id="fDesc" type="text" placeholder="Skill/công cụ này dùng để làm gì" />
+    </div>
+
+    <div id="skillFields">
+      <div class="field">
+        <label>Câu lệnh mẫu (dùng {{ten_bien}} cho tham số)</label>
+        <textarea id="fTemplate" placeholder="VD: Tổng hợp tồn kho tuần {{tuan}} tháng {{thang}}."></textarea>
+        <p class="hint">Mỗi {{...}} trong câu lệnh sẽ tự sinh 1 ô nhập tham số.</p>
+      </div>
+    </div>
+    <div id="toolFields" style="display:none">
+      <div class="field">
+        <label>Đường dẫn hoặc URL</label>
+        <input id="fPath" type="text" placeholder="https://... hoặc D:\Operation\Claude\..." />
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="cancelAdd" type="button">Huỷ</button>
+      <button class="btn btn-primary" id="saveAdd" type="button">Lưu mục này</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =========================================================
+     DATA — sửa/thêm ở đây rồi xuất bản lại Artifact để cập nhật
+     cho tất cả mọi người. Mỗi group có nhiều task (tab); mỗi
+     task chứa các item kind:'skill' (có template + params) hoặc
+     kind:'tool' (có path/url).
+     ========================================================= */
+  var GROUPS = [
+    {
+      id: "baocao",
+      name: "Báo cáo - Kế hoạch",
+      desc: "Các báo cáo BSC định kỳ, xử lý dữ liệu nguồn và kế hoạch sản lượng gửi ban điều hành.",
+      tasks: [
+        {
+          id: "bcqt",
+          name: "BCQT",
+          desc: "Slide Monthly Review Meeting, hạn ngày 25 hàng tháng, dữ liệu tháng trước.",
+          items: [
+            { kind: "skill", id: "process-data-bcqt", generic: true, title: "Process Data", desc: "Chuẩn bị/xử lý dữ liệu nguồn trước khi tạo BCQT — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Xử lý dữ liệu sheet Trend tháng 7/2026 trước khi tạo BCQT", multiline:true} ] },
+            { kind: "skill", id: "bcqt", title: "Tạo BCQT tháng", desc: "Lấy số liệu từ sheet Trend, điền bảng Actual/Target, luỹ kế YTD và target tháng tới vào file PowerPoint BCQT.",
+              template: "Làm BCQT tháng {{thang}} năm {{nam}}.",
+              params: [ {key:"thang", label:"Tháng", placeholder:"7"}, {key:"nam", label:"Năm", placeholder:"2026"} ] }
+          ]
+        },
+        {
+          id: "bsc-oem-gt2",
+          name: "BC OEM & GT2",
+          desc: "Báo cáo quản trị BSC riêng cho bộ phận OEM, GT2 — bảng cam kết, chart, điểm nổi bật.",
+          items: [
+            { kind: "skill", id: "process-data-oem-gt2", generic: true, title: "Process Data", desc: "Chuẩn bị/xử lý dữ liệu nguồn trước khi tạo BC OEM & GT2 — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Xử lý dữ liệu sheet KPI tháng 7/2026 trước khi tạo BC OEM & GT2", multiline:true} ] },
+            { kind: "skill", id: "bc-oem-gt2", title: "Tạo BC tháng OEM & GT2", desc: "Điền số liệu sheet KPI vào file PowerPoint BC Tháng OEM & GT2.",
+              template: "Làm BC OEM&GT2 tháng {{thang}} năm {{nam}}.",
+              params: [ {key:"thang", label:"Tháng", placeholder:"7"}, {key:"nam", label:"Năm", placeholder:"2026"} ] }
+          ]
+        },
+        {
+          id: "bsc-van-hanh",
+          name: "BC VHKD",
+          desc: "Monthly Report VHKD, hạn ngày 5 hàng tháng, dữ liệu tháng trước.",
+          items: [
+            { kind: "skill", id: "process-data-vhkd", generic: true, title: "Process Data VHKD", desc: "Chuẩn bị/xử lý dữ liệu nguồn trước khi tạo BC VHKD — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Xử lý dữ liệu BSC-VHKD nhóm XK+OEM+GT2 tháng 7/2026", multiline:true} ] },
+            { kind: "skill", id: "bc-van-hanh", title: "Tạo BC tháng VHKD", desc: "Điền dữ liệu BSC-VHKD nhóm XK+OEM+GT2 vào file PowerPoint Monthly Report VHKD.",
+              template: "Làm báo cáo vận hành tháng {{thang}} năm {{nam}}.",
+              params: [ {key:"thang", label:"Tháng", placeholder:"7"}, {key:"nam", label:"Năm", placeholder:"2026"} ] }
+          ]
+        },
+        {
+          id: "dt-tuan-oem",
+          name: "BC Tuần OEM",
+          desc: "Cập nhật doanh thu ngày theo mã khách và số dư công nợ vào file Ban_KD_KHDTCN.",
+          items: [
+            { kind: "skill", id: "process-data-tuan", generic: true, title: "Process Data tuần", desc: "Chuẩn bị/xử lý dữ liệu nguồn trước khi cập nhật BC Tuần OEM — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Xử lý dữ liệu doanh thu zsd450 tuần 2 tháng 7/2026", multiline:true} ] },
+            { kind: "skill", id: "update-dt-tuan-oem", title: "Update DT Tuần", desc: "Tổng hợp doanh thu ngày theo mã khách, cập nhật số dư công nợ và kế hoạch sale vào file Ban_KD_KHDTCN.",
+              template: "Cập nhật doanh thu công nợ tuần OEM, tuần {{tuan}} tháng {{thang}}.",
+              params: [ {key:"tuan", label:"Tuần", placeholder:"2"}, {key:"thang", label:"Tháng", placeholder:"7"} ] }
+          ]
+        },
+        {
+          id: "dt-thang-oem",
+          name: "DT OEM (tháng)",
+          desc: "Xuất doanh thu OEM từ SAP (ZSD450) ra Excel rồi cập nhật tab Data của Google Sheet OEM — 2 bước, chạy riêng từng bước.",
+          items: [
+            { kind: "skill", id: "dt-oem", title: "1. Xuất DT OEM (SAP)", desc: "Xuất báo cáo ZSD450 (Sales Org 0400, DC 01) từ SAP GUI ra file Excel cho một tháng — chỉ xuất file, chưa cập nhật Sheet.",
+              template: "Xuất DT OEM tháng {{thang}} năm {{nam}}.",
+              params: [ {key:"thang", label:"Tháng", placeholder:"7"}, {key:"nam", label:"Năm", placeholder:"2026"} ] },
+            { kind: "skill", id: "up-dt-oem", title: "2. Cập nhật DT OEM lên Sheet", desc: "Đọc file Excel DT OEM vừa xuất và cập nhật tab Data của Google Sheet OEM (thay dòng cũ trong tháng, thêm dòng mới).",
+              template: "Cập nhật DT OEM lên sheet tháng {{thang}} năm {{nam}}.",
+              params: [ {key:"thang", label:"Tháng", placeholder:"7"}, {key:"nam", label:"Năm", placeholder:"2026"} ] }
+          ]
+        },
+        {
+          id: "dt-thang-xk",
+          name: "DT XK (tháng)",
+          desc: "Xuất doanh thu XK từ SAP (ZSD450, Sales Org 0401+0202, DC 02) ra Excel — chưa có bước cập nhật Sheet (chưa xác định Sheet đích).",
+          items: [
+            { kind: "skill", id: "dt-xk", title: "Xuất DT XK (SAP)", desc: "Xuất báo cáo ZSD450 (Sales Org 0401 và 0202, DC 02) từ SAP GUI ra file Excel cho một tháng — chỉ xuất file, chưa có Sheet đích để cập nhật.",
+              template: "Xuất DT XK tháng {{thang}} năm {{nam}}.",
+              params: [ {key:"thang", label:"Tháng", placeholder:"7"}, {key:"nam", label:"Năm", placeholder:"2026"} ] }
+          ]
+        },
+        {
+          id: "fc-thang",
+          name: "Forecast (SOP)",
+          desc: "Đối chiếu SOP, cập nhật kế hoạch sản lượng, rồi lên form upload SAP.",
+          items: [
+            { kind: "skill", id: "monthy-fc", title: "Cập nhật FC Tháng", desc: "Đối chiếu SOP với các tab B0.Sum, XK, OEM, GT2, Online rồi điền kế hoạch sản lượng 4 tháng tới vào file FC.",
+              template: "Cập nhật FC tháng {{thang}} năm {{nam}} theo dữ liệu SOP mới nhất.",
+              params: [ {key:"thang", label:"Tháng", placeholder:"7"}, {key:"nam", label:"Năm", placeholder:"2026"} ] },
+            { kind: "skill", id: "fc-tuan", generic: true, title: "Cập nhật FC Tuần", desc: "Đối chiếu kế hoạch sản lượng theo tuần — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Cập nhật FC tuần 2 tháng 7/2026 theo SOP mới nhất", multiline:true} ] },
+            { kind: "skill", id: "upload-fc-sap", title: "Upload MRP (ZPP702)", desc: "Chuyển file Sales Forecast (XK/OEM/GT2) thành form upload SAP ZPP702.",
+              template: "Tạo file upload FC lên SAP kênh {{kenh}} tháng {{thang}} năm {{nam}}.",
+              params: [ {key:"kenh", label:"Kênh (XK/OEM/GT2)", placeholder:"OEM"}, {key:"thang", label:"Tháng", placeholder:"7"}, {key:"nam", label:"Năm", placeholder:"2026"} ] }
+          ]
+        }
+      ]
+    },
+    {
+      id: "donhang",
+      name: "Admin - Đơn hàng",
+      desc: "Ghi nhận đơn hàng và chứng từ liên quan cho các kênh BHT, NSKX, 3T, OEM, XK.",
+      tasks: [
+        {
+          id: "bht",
+          name: "Đơn BHT",
+          desc: "Ghi nhận đơn, tạo phiếu xuất kho và xin phê duyệt trên Odoo cho hai khách Asia và Des.",
+          items: [
+            { kind: "skill", id: "don-bht", title: "Nhận đơn BHT", desc: "Cập nhật bảng \"Đơn hàng\" trên Google Sheets cho khách Asia hoặc Des từ text/ảnh đặt hàng.",
+              template: "Ghi đơn BHT khách {{khach}}: {{noidung}}",
+              params: [ {key:"khach", label:"Khách (Asia/Des)", placeholder:"Asia"}, {key:"noidung", label:"Nội dung đơn (model + số lượng)", placeholder:"Model X: 20 cái, Model Y: 15 cái", multiline:true} ] },
+            { kind: "skill", id: "phieu-xk-bht", title: "Phiếu Xuất kho BHT", desc: "Tạo phiếu xuất kho (PXK) BHT 68 cho khách Asia/Des theo số toa trong Google Sheet SOP.",
+              template: "Tạo phiếu xuất kho BHT cho khách {{khach}}, toa {{toa}}.",
+              params: [ {key:"khach", label:"Khách (Asia/Des)", placeholder:"Des"}, {key:"toa", label:"Số toa", placeholder:"07"} ] },
+            { kind: "skill", id: "phe-duyet-bht", title: "Phê duyệt BHT", desc: "Tạo đơn phê duyệt trên Odoo (Karofi) cho toa BHT đã có phiếu xuất kho — tự gán người thẩm định/phê duyệt/theo dõi, đính kèm phiếu XK, để ở trạng thái nháp cho người dùng tự gửi duyệt.",
+              template: "Phê duyệt BHT khách {{khach}}, toa {{toa}}.",
+              params: [ {key:"khach", label:"Khách (Asia/Des)", placeholder:"Asia"}, {key:"toa", label:"Số toa", placeholder:"09"} ] }
+          ]
+        },
+        {
+          id: "nskx",
+          name: "Đơn NSKX",
+          desc: "Trích xuất đơn từ email admindieuphoi@nuocsachkhixanh.com.",
+          items: [
+            { kind: "skill", id: "don-hang-nskx", title: "Nhận đơn NSKX", desc: "Trích xuất đơn hàng từ email/ảnh và ghi vào file Đơn hàng NSKX.xlsx.",
+              template: "Trích xuất và cập nhật đơn hàng NSKX từ nội dung sau:\n{{noidung}}",
+              params: [ {key:"noidung", label:"Dán nội dung email / mô tả ảnh", placeholder:"NSKX ĐẶT HÀNG KAROFI MIỀN NAM ... (DO.xxx)", multiline:true} ] }
+          ]
+        },
+        {
+          id: "don-3t",
+          name: "Đơn 3T",
+          desc: "Ghi nhận đơn hàng kênh 3T.",
+          items: [
+            { kind: "skill", id: "don-3t", generic: true, title: "Nhận đơn 3T", desc: "Ghi nhận đơn hàng kênh 3T — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Ghi nhận đơn 3T: model X 20 cái, model Y 15 cái", multiline:true} ] }
+          ]
+        },
+        {
+          id: "oem-order",
+          name: "Đơn OEM",
+          desc: "Tra mã hàng và ghi nhận đơn đặt hàng từ khách OEM.",
+          items: [
+            { kind: "skill", id: "don-hang-oem", title: "Nhận đơn OEM", desc: "Tra mã hàng qua file Tên thường gọi OEM rồi ghi vào file Đơn hàng OEM.xlsx.",
+              template: "Trích xuất và cập nhật đơn hàng OEM từ nội dung sau:\n{{noidung}}",
+              params: [ {key:"noidung", label:"Dán nội dung đặt hàng", placeholder:"Khách A đặt 50 máy model B...", multiline:true} ] }
+          ]
+        },
+        {
+          id: "don-xk",
+          name: "Đơn XK",
+          desc: "Nhận đơn, cài giá và chuẩn hoá nhãn thùng cho hàng xuất khẩu.",
+          items: [
+            { kind: "skill", id: "form-cai-gia", generic: true, title: "Form cài giá", desc: "Nhập/áp giá bán cho đơn xuất khẩu — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Cài giá bán cho đơn xuất khẩu khách ABC, PI số...", multiline:true} ] },
+            { kind: "skill", id: "nhan-don-xk", generic: true, title: "Nhận đơn XK", desc: "Ghi nhận đơn hàng xuất khẩu — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Ghi nhận đơn xuất khẩu khách ABC: model X 200 cái", multiline:true} ] },
+            { kind: "skill", id: "marking-xuat-khau", title: "Marking XK", desc: "Đổi tên các sheet trong file Marking xuất khẩu theo đúng item code lấy từ ô D7.",
+              template: "Đổi tên sheet theo item code (ô D7) cho file: {{ten_file}}.",
+              params: [ {key:"ten_file", label:"Tên file Marking", placeholder:"Marking_XK_T7.xlsx"} ] }
+          ]
+        }
+      ]
+    },
+    {
+      id: "xkct",
+      name: "Chứng từ Xuất khẩu",
+      desc: "Chuẩn bị chứng từ hải quan, lịch trình vận chuyển và hồ sơ C/O.",
+      tasks: [
+        {
+          id: "hai-quan",
+          name: "Chứng từ Hải quan",
+          desc: "Chuẩn bị bộ chứng từ khai hải quan cho lô hàng xuất khẩu.",
+          items: [
+            { kind: "skill", id: "chung-tu-hq", generic: true, title: "Tạo bộ chứng từ HQ", desc: "Chuẩn bị bộ chứng từ khai hải quan — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Tạo bộ chứng từ hải quan cho lô hàng PI số...", multiline:true} ] }
+          ]
+        },
+        {
+          id: "lich-trinh",
+          name: "Cập nhật lịch trình",
+          desc: "Theo dõi và cập nhật lịch trình vận chuyển các lô hàng.",
+          items: [
+            { kind: "tool", title: "Update data lịch trình", desc: "Tự tạo link tra cứu vận đơn tới 18 hãng tàu (Maersk, MSC, CMA CGM...) từ Google Sheet Order.",
+              path: "https://karofisale.github.io/export/shipment-tracking.html" }
+          ]
+        },
+        {
+          id: "phat-hanh",
+          name: "Phát hành document",
+          desc: "Phát hành bộ chứng từ gốc gửi khách hàng / hãng tàu.",
+          items: [
+            { kind: "skill", id: "chung-tu-goc", generic: true, title: "Tạo bộ chứng từ gốc", desc: "Phát hành bộ chứng từ gốc — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Tạo bộ chứng từ gốc cho lô hàng PI số...", multiline:true} ] }
+          ]
+        },
+        {
+          id: "co",
+          name: "Tài liệu C/O",
+          desc: "Chuẩn bị hồ sơ chứng nhận xuất xứ (C/O) cho lô hàng.",
+          items: [
+            { kind: "skill", id: "ho-so-co", generic: true, title: "Tạo bộ hồ sơ C/O", desc: "Chuẩn bị hồ sơ chứng nhận xuất xứ — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Tạo bộ hồ sơ C/O cho lô hàng PI số...", multiline:true} ] }
+          ]
+        }
+      ]
+    },
+    {
+      id: "hotro-kt",
+      name: "Hỗ trợ kỹ thuật",
+      desc: "Kiểm tra chứng từ, sản phẩm và hỗ trợ thông tin kỹ thuật cho kinh doanh.",
+      tasks: [
+        {
+          id: "kiem-tra-pi",
+          name: "Kiểm tra PI",
+          desc: "Rà soát và hoàn thiện file PI trước khi phát hành.",
+          items: [
+            { kind: "skill", id: "kiem-tra-pi", title: "Kiểm tra mã/tên/đóng gói", desc: "Rà soát điều kiện thương mại, đối chiếu và điền mã hàng, tên sản phẩm, quy cách đóng gói với dữ liệu nguồn trên Google Sheets.",
+              template: "Kiểm tra PI cho khách {{khach}}, file {{ten_file}}.",
+              params: [ {key:"khach", label:"Khách hàng", placeholder:"ABC Trading"}, {key:"ten_file", label:"Tên/đường dẫn file PI", placeholder:"PI_2026070xx.xlsx"} ] },
+            { kind: "skill", id: "tinh-toan-cbm", title: "Tính toán CBM", desc: "Tra mã thùng, đọc kích thước từ file thiết kế, điền CTN DIMENSION vào PI, tính CBM và đánh giá xếp container.",
+              template: "Tính CBM cho đơn hàng theo file PI: {{ten_file}}.",
+              params: [ {key:"ten_file", label:"Tên file PI", placeholder:"PI_2026070xx.xlsx"} ] }
+          ]
+        },
+        {
+          id: "yc-sp",
+          name: "Yêu cầu Sản phẩm",
+          desc: "Tiếp nhận yêu cầu phát triển sản phẩm mới (PTSPM).",
+          items: [
+            { kind: "skill", id: "yc-ptspm", generic: true, title: "YC PTSPM", desc: "Tiếp nhận yêu cầu phát triển sản phẩm mới — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Yêu cầu phát triển sản phẩm mới: model X, thông số...", multiline:true} ] }
+          ]
+        },
+        {
+          id: "maket",
+          name: "Kiểm tra maket",
+          desc: "Kiểm tra maket / nhãn mác sản phẩm trước khi sản xuất.",
+          items: [
+            { kind: "skill", id: "kiem-tra-maket", generic: true, title: "Kiểm tra maket", desc: "Kiểm tra maket/nhãn mác sản phẩm — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Kiểm tra maket model X so với file thiết kế gốc", multiline:true} ] }
+          ]
+        },
+        {
+          id: "tt-sp",
+          name: "Thông tin sản phẩm",
+          desc: "Tra cứu thông tin, lịch sử và xử lý khiếu nại liên quan sản phẩm.",
+          items: [
+            { kind: "skill", id: "thu-vien-sp", generic: true, title: "Thư viện sản phẩm", desc: "Tra cứu thư viện sản phẩm — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Tra thông tin sản phẩm model X trong thư viện", multiline:true} ] },
+            { kind: "skill", id: "thong-tin-kt", generic: true, title: "Thông tin kỹ thuật", desc: "Tra cứu thông tin kỹ thuật sản phẩm — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Tra thông số kỹ thuật model X", multiline:true} ] },
+            { kind: "skill", id: "lich-su-loi-sp", generic: true, title: "Lịch sử lỗi sản phẩm", desc: "Tra cứu lịch sử lỗi sản phẩm — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Tra lịch sử lỗi của model X", multiline:true} ] },
+            { kind: "skill", id: "xu-ly-claim", generic: true, title: "Xử lý claim", desc: "Xử lý khiếu nại sản phẩm — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Xử lý claim của khách ABC cho model X", multiline:true} ] }
+          ]
+        },
+        {
+          id: "cc-kt",
+          name: "Chứng chỉ kỹ thuật",
+          desc: "Quản lý hồ sơ và khai báo chứng chỉ kỹ thuật sản phẩm.",
+          items: [
+            { kind: "skill", id: "xl-application", generic: true, title: "Xử lý Tài liệu Application", desc: "Xử lý tài liệu application cho chứng chỉ — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Xử lý tài liệu application cho chứng chỉ model X", multiline:true} ] },
+            { kind: "skill", id: "khai-bao-cc", generic: true, title: "Khai báo chứng chỉ", desc: "Khai báo chứng chỉ kỹ thuật — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Khai báo chứng chỉ CE cho model X", multiline:true} ] },
+            { kind: "skill", id: "danh-muc-cc", generic: true, title: "Danh mục chứng chỉ", desc: "Tra cứu danh mục chứng chỉ hiện có — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Liệt kê chứng chỉ hiện có của model X", multiline:true} ] }
+          ]
+        }
+      ]
+    },
+    {
+      id: "congcu",
+      name: "Công cụ nội bộ",
+      desc: "Ứng dụng tự xây bằng Claude Code và các chỉ số theo dõi nội bộ.",
+      tasks: [
+        {
+          id: "bao-gia-pi",
+          name: "Báo giá PI (Export Ops Hub)",
+          desc: "Web app cho sale lập báo giá PI — đọc trực tiếp Operations2025 + ExportSystem, lưu vào file riêng từng sale.",
+          items: [
+            { kind: "tool", title: "Export Ops Hub — Báo giá PI", desc: "Sale đăng nhập bằng tên + PIN, xem khách của mình, Edit/Clone/tạo đơn mới, tính %LN + CBM + container, tạo máy mới qua BOM Customize, xuất PI Excel/PDF.",
+              path: "https://karofisale.github.io/export/pi-app.html" }
+          ]
+        },
+        {
+          id: "gia-ban",
+          name: "Kiểm tra giá bán",
+          desc: "Công cụ tra giá thành theo BOM.",
+          items: [
+            { kind: "tool", title: "Công cụ tra giá thành", desc: "Nhập mã máy → ra giá thành ngay, dựa trên hơn 124.000 dòng dữ liệu BOM.",
+              path: "D:\\Operation\\Claude\\Projects\\Cong-cu-Gia-thanh-BOM\\Mo-Cong-Cu.bat",
+              howto: "Mở file .bat này (double-click trong File Explorer) để khởi động server cục bộ — trình duyệt sẽ tự mở công cụ." }
+          ]
+        },
+        {
+          id: "bsc-kpi",
+          name: "BSC/KPI",
+          desc: "Theo dõi chỉ số BSC của bộ phận và KPI từng thành viên.",
+          items: [
+            { kind: "skill", id: "bsc-bo-phan", generic: true, title: "BSC bộ phận", desc: "Theo dõi chỉ số BSC của bộ phận — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Tổng hợp chỉ số BSC bộ phận tháng 7/2026", multiline:true} ] },
+            { kind: "skill", id: "kpi-thanh-vien", generic: true, title: "KPI thành viên", desc: "Theo dõi KPI từng thành viên — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Tổng hợp KPI thành viên tháng 7/2026", multiline:true} ] }
+          ]
+        }
+      ]
+    },
+    {
+      id: "tailieu-noibo",
+      name: "Tài liệu nội bộ",
+      desc: "Đào tạo, quy trình và mô tả công việc của bộ phận.",
+      tasks: [
+        {
+          id: "dao-tao",
+          name: "Đào tạo học hỏi",
+          desc: "Tài liệu và công cụ phục vụ đào tạo nội bộ.",
+          items: [
+            { kind: "skill", id: "danh-muc-tl", generic: true, title: "Danh mục tài liệu", desc: "Tra cứu danh mục tài liệu đào tạo — chưa có skill riêng, dùng khung yêu cầu chung.",
+              template: "{{yeu_cau}}",
+              params: [ {key:"yeu_cau", label:"Yêu cầu cụ thể", placeholder:"Liệt kê tài liệu đào tạo về quy trình xuất khẩu", multiline:true} ] },
+            { kind: "skill", id: "slide-karofi", title: "Công cụ Chuẩn hoá slide", desc: "Chuyển bài trình chiếu sang chuẩn thương hiệu Karofi và tự thêm 3 slide câu hỏi ôn tập cuối bài.",
+              template: "Chuyển slide {{ten_file}} sang chuẩn Karofi và thêm câu hỏi trắc nghiệm cuối bài.",
+              params: [ {key:"ten_file", label:"Tên file trình chiếu", placeholder:"Đào tạo sản phẩm mới.pptx"} ] }
+          ]
+        },
+        {
+          id: "quy-trinh",
+          name: "Quy trình nội bộ",
+          desc: "Quy trình làm việc chuẩn hoá của bộ phận.",
+          items: []
+        },
+        {
+          id: "mo-ta-cv",
+          name: "Mô tả công việc",
+          desc: "Mô tả vị trí và trách nhiệm công việc trong bộ phận.",
+          items: []
+        }
+      ]
+    },
+    {
+      id: "tudonghoa",
+      name: "Tự động hoá & Lịch trình",
+      desc: "Thiết lập việc chạy tự động theo lịch, không cần nhắc lại mỗi lần.",
+      tasks: [
+        { id: "schedule", name: "Lịch nhắc tự động", desc: "Tạo/cập nhật lịch chạy tự động hàng ngày, hàng tuần, hàng tháng.",
+          items: [ { kind: "skill", id: "schedule", title: "Tạo / cập nhật lịch tự động", desc: "Thiết lập việc chạy tự động theo lịch — hàng ngày, hàng tuần, hàng tháng.",
+            template: "Tạo lịch tự động: {{mo_ta}}, chạy vào {{thoi_gian}}.",
+            params: [ {key:"mo_ta", label:"Mô tả công việc", placeholder:"Nhắc cập nhật đơn NSKX"}, {key:"thoi_gian", label:"Thời điểm chạy", placeholder:"8:00 sáng thứ 2 hàng tuần"} ] } ] }
+      ]
+    }
+  ];
+
+  var LS_KEY = "vhkd_dashboard_custom_v1";
+  var LS_THEME_IGNORE = null; // theme handled by host page attribute, not stored here
+
+  function loadCustom() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+  function saveCustom(list) {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(list)); } catch (e) {}
+  }
+
+  function mergedGroups() {
+    var groups = GROUPS.map(function (g) {
+      return { id: g.id, name: g.name, desc: g.desc, tasks: g.tasks.map(function (t) {
+        return { id: t.id, name: t.name, desc: t.desc, items: t.items.slice() };
+      }) };
+    });
+    var custom = loadCustom();
+    custom.forEach(function (entry) {
+      var g = groups.filter(function (x) { return x.id === entry.groupId; })[0];
+      if (!g) {
+        g = { id: entry.groupId, name: entry.groupName || entry.groupId, desc: "Nhóm tự thêm.", tasks: [] };
+        groups.push(g);
+      }
+      var t = g.tasks.filter(function (x) { return x.id === entry.taskId; })[0];
+      if (!t) {
+        t = { id: entry.taskId, name: entry.taskName, desc: "", items: [] };
+        g.tasks.push(t);
+      }
+      var item = { kind: entry.kind, title: entry.title, desc: entry.desc, custom: true, customId: entry.customId };
+      if (entry.kind === "skill") {
+        item.template = entry.template;
+        item.params = extractParams(entry.template);
+      } else {
+        item.path = entry.path;
+        item.howto = /^https?:\/\//i.test(entry.path || "") ? "Mở liên kết này trong tab mới." : "Sao chép đường dẫn rồi mở thủ công trên máy của bạn.";
+      }
+      t.items.push(item);
+    });
+    return groups;
+  }
+
+  function extractParams(tpl) {
+    var seen = {}, out = [];
+    (tpl || "").replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, function (m, key) {
+      if (!seen[key]) { seen[key] = true; out.push({ key: key, label: key, placeholder: "" }); }
+      return m;
+    });
+    return out;
+  }
+
+  var state = { groupId: null, taskId: null };
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function toFileUrl(winPath) {
+    var norm = (winPath || "").replace(/\\/g, "/");
+    if (/^[a-zA-Z]:\//.test(norm)) { norm = "/" + norm; }
+    return "file://" + encodeURI(norm);
+  }
+
+  function render() {
+    var groups = mergedGroups();
+    if (!groups.length) return;
+    if (!state.groupId || !groups.some(function (g) { return g.id === state.groupId; })) {
+      state.groupId = groups[0].id;
+    }
+    var group = groups.filter(function (g) { return g.id === state.groupId; })[0];
+    if (!group.tasks.length) {
+      state.taskId = null;
+    } else if (!state.taskId || !group.tasks.some(function (t) { return t.id === state.taskId; })) {
+      state.taskId = group.tasks[0].id;
+    }
+
+    // rail nav
+    var nav = document.getElementById("railNav");
+    nav.innerHTML = "";
+    groups.forEach(function (g) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "rail-btn" + (g.id === state.groupId ? " active" : "");
+      var count = g.tasks.reduce(function (n, t) { return n + t.items.length; }, 0);
+      btn.innerHTML = "<span>" + escapeHtml(g.name) + "</span><span class=\"count\">" + count + "</span>";
+      btn.addEventListener("click", function () { state.groupId = g.id; state.taskId = null; render(); });
+      nav.appendChild(btn);
+    });
+
+    document.getElementById("groupEyebrow").textContent = "Nhóm công việc";
+    document.getElementById("groupTitle").textContent = group.name;
+    document.getElementById("groupDesc").textContent = group.desc || "";
+
+    // tabs
+    var tabsEl = document.getElementById("taskTabs");
+    tabsEl.innerHTML = "";
+    group.tasks.forEach(function (t) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "tab" + (t.id === state.taskId ? " active" : "");
+      b.textContent = t.name;
+      b.addEventListener("click", function () { state.taskId = t.id; render(); });
+      tabsEl.appendChild(b);
+    });
+
+    var task = group.tasks.filter(function (t) { return t.id === state.taskId; })[0];
+    var grid = document.getElementById("cardGrid");
+    var taskDesc = document.getElementById("taskDesc");
+    grid.innerHTML = "";
+    if (!task) {
+      taskDesc.textContent = "";
+      grid.innerHTML = '<div class="empty">Chưa có mục nào trong đầu mục này. Bấm "+ Thêm kỹ năng / công cụ" để bắt đầu.</div>';
+      return;
+    }
+    taskDesc.textContent = task.desc || "";
+    if (!task.items.length) {
+      grid.innerHTML = '<div class="empty">Chưa có mục nào trong đầu mục này. Bấm "+ Thêm kỹ năng / công cụ" để bắt đầu.</div>';
+      return;
+    }
+    task.items.forEach(function (item, idx) {
+      grid.appendChild(buildCard(item, group.id + "-" + task.id + "-" + idx));
+    });
+  }
+
+  function buildCard(item, uid) {
+    var card = document.createElement("div");
+    card.className = "card";
+    var isSkill = item.kind === "skill";
+    var chipClass = isSkill ? (item.generic ? "generic" : "skill") : "tool";
+    var chipLabel = isSkill ? (item.generic ? "Khung chung" : "Kỹ năng") : "Công cụ";
+
+    var body = document.createElement("div");
+    body.className = "card-body";
+    body.innerHTML =
+      '<div class="card-top">' +
+        '<h3>' + escapeHtml(item.title) + '</h3>' +
+        '<span class="chip ' + chipClass + '">' + chipLabel + '</span>' +
+      '</div>' +
+      '<p class="desc">' + escapeHtml(item.desc || "") + '</p>';
+
+    var actions = document.createElement("div");
+    actions.className = "card-actions";
+
+    var isHttpUrl = !isSkill && /^https?:\/\//i.test(item.path || "");
+    var isAbsoluteWinPath = /^[a-zA-Z]:[\\\/]/.test(item.path || "");
+    var isLocalHtml = !isSkill && !isHttpUrl && /\.html?$/i.test(item.path || "");
+    var isUrl = isHttpUrl || isLocalHtml;
+
+    if (isUrl) {
+      var a = document.createElement("a");
+      a.href = isHttpUrl ? item.path : (isAbsoluteWinPath ? toFileUrl(item.path) : item.path);
+      a.target = "_blank"; a.rel = "noopener";
+      a.className = "btn btn-link"; a.textContent = "Mở công cụ ↗";
+      actions.appendChild(a);
+    } else {
+      var toggleBtn = document.createElement("button");
+      toggleBtn.type = "button";
+      toggleBtn.className = "btn btn-primary";
+      toggleBtn.textContent = isSkill ? "Sử dụng" : "Xem đường dẫn";
+      actions.appendChild(toggleBtn);
+    }
+
+    if (item.custom) {
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "btn-danger-text";
+      del.style.marginLeft = "auto";
+      del.style.alignSelf = "center";
+      del.textContent = "Xoá mục tự thêm";
+      del.addEventListener("click", function () { removeCustom(item.customId); });
+      actions.appendChild(del);
+    }
+
+    body.appendChild(actions);
+
+    if (isLocalHtml && isAbsoluteWinPath) {
+      var note = document.createElement("p");
+      note.className = "howto";
+      note.style.marginTop = "8px";
+      note.textContent = "Mở trực tiếp file .html trên máy bạn — nếu trình duyệt chặn, hãy mở thủ công từ File Explorer.";
+      body.appendChild(note);
+    }
+
+    card.appendChild(body);
+
+    if (!isUrl) {
+      var panel = document.createElement("div");
+      panel.className = "panel";
+      var inner = document.createElement("div");
+      inner.className = "panel-inner";
+      panel.appendChild(inner);
+      card.appendChild(panel);
+
+      var open = false;
+      actions.querySelector("button.btn-primary").addEventListener("click", function () {
+        open = !open;
+        panel.classList.toggle("open", open);
+        if (open && inner.childNodes.length === 0) {
+          if (isSkill) buildSkillPanel(inner, item, uid);
+          else buildToolPanel(inner, item);
+        }
+      });
+    }
+
+    return card;
+  }
+
+  function buildSkillPanel(inner, item, uid) {
+    var fields = (item.params || []).map(function (p) {
+      var id = "f_" + uid + "_" + p.key;
+      var control = p.multiline
+        ? '<textarea id="' + id + '" placeholder="' + escapeHtml(p.placeholder || "") + '"></textarea>'
+        : '<input id="' + id + '" type="text" placeholder="' + escapeHtml(p.placeholder || "") + '" />';
+      return '<div class="field"><label>' + escapeHtml(p.label) + '</label>' + control + '</div>';
+    }).join("");
+
+    inner.innerHTML =
+      fields +
+      '<div class="field"><label>Câu lệnh sẽ dán vào Cowork</label><div class="preview" id="prev_' + uid + '"></div></div>' +
+      '<div class="panel-actions">' +
+        '<button type="button" class="btn btn-primary" id="copy_' + uid + '">Copy</button>' +
+        '<span class="copied-flag" id="flag_' + uid + '">Đã copy ✓</span>' +
+      '</div>';
+
+    function updatePreview() {
+      var text = item.template || "";
+      (item.params || []).forEach(function (p) {
+        var el = document.getElementById("f_" + uid + "_" + p.key);
+        var val = el ? el.value.trim() : "";
+        text = text.split("{{" + p.key + "}}").join(val || "{" + p.label + "}");
+      });
+      document.getElementById("prev_" + uid).textContent = text;
+      return text;
+    }
+    (item.params || []).forEach(function (p) {
+      var el = document.getElementById("f_" + uid + "_" + p.key);
+      el.addEventListener("input", updatePreview);
+    });
+    updatePreview();
+
+    document.getElementById("copy_" + uid).addEventListener("click", function () {
+      var text = updatePreview();
+      var previewEl = document.getElementById("prev_" + uid);
+      var flag = document.getElementById("flag_" + uid);
+      copyText(text, previewEl, function (ok) {
+        flag.textContent = ok ? "Đã copy ✓" : "Không tự copy được";
+        flag.classList.add("show");
+        setTimeout(function () { flag.classList.remove("show"); }, 1800);
+        showToast(ok ? "Đã copy — dán vào Cowork để chạy skill." : "Trình duyệt chặn copy tự động — câu lệnh đã được bôi đen, nhấn Ctrl+C.");
+      });
+    });
+  }
+
+  function buildToolPanel(inner, item) {
+    inner.innerHTML =
+      '<div class="field"><label>Đường dẫn</label><div class="preview path" id="pathtext"></div></div>' +
+      '<p class="howto">' + escapeHtml(item.howto || "") + '</p>' +
+      '<div class="panel-actions">' +
+        '<button type="button" class="btn btn-primary" id="copypath">Sao chép đường dẫn</button>' +
+        '<span class="copied-flag" id="pathflag">Đã copy ✓</span>' +
+      '</div>';
+    inner.querySelector("#pathtext").textContent = item.path || "";
+    inner.querySelector("#copypath").addEventListener("click", function () {
+      var pathEl = inner.querySelector("#pathtext");
+      var flag = inner.querySelector("#pathflag");
+      copyText(item.path || "", pathEl, function (ok) {
+        flag.textContent = ok ? "Đã copy ✓" : "Không tự copy được";
+        flag.classList.add("show");
+        setTimeout(function () { flag.classList.remove("show"); }, 1800);
+        showToast(ok ? "Đã copy đường dẫn." : "Trình duyệt chặn copy tự động — đường dẫn đã được bôi đen, nhấn Ctrl+C.");
+      });
+    });
+  }
+
+  function copyText(text, sourceEl, done) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(
+        function () { done && done(true); },
+        function () { done && done(fallbackCopy(text, sourceEl)); }
+      );
+    } else {
+      done && done(fallbackCopy(text, sourceEl));
+    }
+  }
+  function fallbackCopy(text, sourceEl) {
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    if (!ok && sourceEl) {
+      try {
+        var range = document.createRange();
+        range.selectNodeContents(sourceEl);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } catch (e2) {}
+    }
+    return ok;
+  }
+
+  var toastTimer = null;
+  function showToast(msg) {
+    var toast = document.getElementById("toast");
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove("show"); }, 2200);
+  }
+
+  function removeCustom(customId) {
+    var list = loadCustom().filter(function (e) { return e.customId !== customId; });
+    saveCustom(list);
+    render();
+  }
+
+  /* ---------- Add-entry modal ---------- */
+  var modalBackdrop = document.getElementById("addModalBackdrop");
+  var currentKind = "skill";
+
+  function populateGroupSelect() {
+    var sel = document.getElementById("fGroup");
+    sel.innerHTML = "";
+    mergedGroups().forEach(function (g) {
+      var opt = document.createElement("option");
+      opt.value = g.id; opt.textContent = g.name;
+      sel.appendChild(opt);
+    });
+  }
+
+  document.getElementById("openAddModal").addEventListener("click", function () {
+    populateGroupSelect();
+    document.getElementById("fTask").value = "";
+    document.getElementById("fTitle").value = "";
+    document.getElementById("fDesc").value = "";
+    document.getElementById("fTemplate").value = "";
+    document.getElementById("fPath").value = "";
+    setKind("skill");
+    modalBackdrop.classList.add("open");
+  });
+  document.getElementById("cancelAdd").addEventListener("click", function () {
+    modalBackdrop.classList.remove("open");
+  });
+  modalBackdrop.addEventListener("click", function (e) {
+    if (e.target === modalBackdrop) modalBackdrop.classList.remove("open");
+  });
+
+  function setKind(kind) {
+    currentKind = kind;
+    document.getElementById("kindSkillBtn").classList.toggle("active", kind === "skill");
+    document.getElementById("kindToolBtn").classList.toggle("active", kind === "tool");
+    document.getElementById("skillFields").style.display = kind === "skill" ? "" : "none";
+    document.getElementById("toolFields").style.display = kind === "tool" ? "" : "none";
+  }
+  document.getElementById("kindSkillBtn").addEventListener("click", function () { setKind("skill"); });
+  document.getElementById("kindToolBtn").addEventListener("click", function () { setKind("tool"); });
+
+  document.getElementById("saveAdd").addEventListener("click", function () {
+    var groupId = document.getElementById("fGroup").value;
+    var groupName = document.getElementById("fGroup").selectedOptions[0]
+      ? document.getElementById("fGroup").selectedOptions[0].textContent : groupId;
+    var taskName = document.getElementById("fTask").value.trim();
+    var title = document.getElementById("fTitle").value.trim();
+    var desc = document.getElementById("fDesc").value.trim();
+    if (!taskName || !title) { showToast("Cần nhập đầu mục công việc và tên hiển thị."); return; }
+
+    var entry = {
+      customId: "c" + Date.now() + Math.random().toString(36).slice(2, 7),
+      groupId: groupId, groupName: groupName,
+      taskId: taskName.toLowerCase().replace(/[^a-z0-9à-ợ]+/gi, "-"),
+      taskName: taskName,
+      title: title, desc: desc,
+      kind: currentKind
+    };
+    if (currentKind === "skill") {
+      entry.template = document.getElementById("fTemplate").value.trim();
+      if (!entry.template) { showToast("Cần nhập câu lệnh mẫu."); return; }
+    } else {
+      entry.path = document.getElementById("fPath").value.trim();
+      if (!entry.path) { showToast("Cần nhập đường dẫn hoặc URL."); return; }
+    }
+
+    var list = loadCustom();
+    list.push(entry);
+    saveCustom(list);
+    modalBackdrop.classList.remove("open");
+    state.groupId = groupId;
+    state.taskId = entry.taskId;
+    render();
+    showToast("Đã thêm — chỉ hiển thị trên trình duyệt này.");
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
