@@ -409,6 +409,99 @@
     .rail-note { display: none; }
     .topbar, .tabs, .content { padding-left: 18px; padding-right: 18px; }
   }
+
+  /* ===================================================================
+     Karofi ID — đăng nhập một lần + dải thẻ ứng dụng (2026-08)
+     Tên class đều bắt đầu bằng kid- để không đụng phần dashboard cũ.
+     =================================================================== */
+  .kid-account {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .kid-who { display: flex; flex-direction: column; gap: 2px; }
+  .kid-who-name { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+  .kid-who-sub {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: .04em;
+    color: var(--ink-faint);
+  }
+  .kid-account-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .kid-mini {
+    font: inherit;
+    font-size: 11.5px;
+    background: transparent;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 4px 9px;
+    cursor: pointer;
+  }
+  .kid-mini:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .kid-mini.kid-primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: transparent;
+    font-weight: 600;
+    padding: 6px 12px;
+    font-size: 12.5px;
+  }
+  .kid-mini.kid-primary:hover { filter: brightness(1.06); }
+
+  .kid-apps {
+    border-bottom: 1px solid var(--line);
+    padding: 20px 28px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--bg-elevated);
+  }
+  .kid-apps-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .kid-apps-meta { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); }
+  .kid-app-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+    gap: 12px;
+  }
+  .kid-app {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-decoration: none;
+    color: inherit;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    transition: border-color .15s, transform .15s;
+  }
+  a.kid-app:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .kid-app-name { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+  .kid-app-desc { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+  .kid-app-stats { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+  .kid-stat { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; }
+  .kid-stat-label { color: var(--ink-faint); }
+  .kid-stat-value { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); }
+  .kid-app-foot {
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .kid-app.kid-locked { opacity: .58; cursor: default; }
+  .kid-app.kid-locked .kid-app-foot { color: var(--ink-faint); }
+
+  .kid-modal .field:last-of-type { margin-bottom: 4px; }
+  .kid-msg { font-size: 12.5px; line-height: 1.5; margin: 8px 0 0; min-height: 1em; }
+  .kid-msg.kid-bad { color: var(--critical); }
+  .kid-msg.kid-good { color: var(--success); }
+  .kid-note { font-size: 12px; color: var(--ink-faint); margin: 6px 0 0; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -417,6 +510,7 @@
     <div class="rail-head">
       <div class="org">Karofi · Vận hành Kinh doanh</div>
       <h1>Trung Tâm Vận Hành Karofi</h1>
+      <div class="kid-account" id="kidAccount"></div>
     </div>
     <nav class="rail-nav" id="railNav"></nav>
     <div class="rail-foot">
@@ -426,6 +520,13 @@
   </aside>
 
   <main class="main">
+    <section class="kid-apps" aria-label="Ứng dụng vận hành">
+      <div class="kid-apps-head">
+        <div class="eyebrow">Ứng dụng vận hành</div>
+        <div class="kid-apps-meta" id="kidAppsMeta"></div>
+      </div>
+      <div class="kid-app-grid" id="kidAppGrid"></div>
+    </section>
     <div class="topbar">
       <div class="eyebrow" id="groupEyebrow">Nhóm công việc</div>
       <h2 id="groupTitle">—</h2>
@@ -1274,6 +1375,474 @@
   });
 
   render();
+})();
+</script>
+<div class="modal-backdrop" id="kidBackdrop">
+  <div class="modal kid-modal">
+    <h3 id="kidTitle">Đăng nhập</h3>
+    <p class="sub" id="kidSub">Một tài khoản dùng chung cho Sale Forecast, OEM và Xuất khẩu.</p>
+
+    <div id="kidLoginFields">
+      <div class="field">
+        <label for="kidUser">Tên đăng nhập</label>
+        <input id="kidUser" type="text" autocomplete="username" placeholder="Tên bạn vẫn dùng để vào app, hoặc email công ty" />
+      </div>
+      <div class="field">
+        <label for="kidPin">Mã PIN</label>
+        <input id="kidPin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN hiện tại của bạn" />
+      </div>
+      <p class="kid-note">Vẫn dùng đúng PIN bạn đang có ở bất kỳ app nào trong ba app — không cần đổi.</p>
+    </div>
+
+    <div id="kidPinFields" style="display:none">
+      <div class="field">
+        <label for="kidOldPin">PIN hiện tại</label>
+        <input id="kidOldPin" type="password" inputmode="numeric" autocomplete="current-password" />
+      </div>
+      <div class="field">
+        <label for="kidNewPin">PIN mới</label>
+        <input id="kidNewPin" type="password" inputmode="numeric" autocomplete="new-password" />
+      </div>
+      <div class="field">
+        <label for="kidNewPin2">Nhập lại PIN mới</label>
+        <input id="kidNewPin2" type="password" inputmode="numeric" autocomplete="new-password" />
+      </div>
+      <p class="kid-note">Ít nhất 4 chữ số, không phải dãy giống nhau hay liên tiếp.</p>
+    </div>
+
+    <p class="kid-msg" id="kidMsg"></p>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="kidCancel" type="button">Đóng</button>
+      <button class="btn btn-primary" id="kidSubmit" type="button">Đăng nhập</button>
+    </div>
+  </div>
+</div>
+<script>
+/* =====================================================================
+   Karofi ID — đăng nhập một lần cho cả ba app (2026-08)
+
+   Vì sao chỗ này đơn giản đến vậy: cổng VHKD, FC, OEM và Export đều nằm
+   trên CÙNG một origin (karofisale.github.io), nên chúng dùng chung một
+   kho localStorage. Đăng nhập ở đây là ba app kia đọc được ngay, không
+   cần cookie cross-domain, không cần OAuth, không cần server riêng.
+
+   Token do dịch vụ Karofi ID phát hành, có chữ ký HMAC. Mỗi backend tự
+   kiểm chữ ký tại chỗ — không backend nào phải gọi ngược về đây.
+   ===================================================================== */
+(function () {
+  "use strict";
+
+  /* --------------------------------------------------------------
+     DÁN URL Ở ĐÂY sau khi deploy dự án Apps Script "Karofi ID"
+     (Deploy → New deployment → Web app → Execute as Me,
+      Who has access: Anyone → copy URL kết thúc bằng /exec).
+     Để trống thì trang vẫn chạy bình thường như trước, các thẻ app
+     là link thường và không có đăng nhập chung.
+     -------------------------------------------------------------- */
+  var KAROFI_ID_API = "https://script.google.com/macros/s/AKfycbwKj1-OX7ChQMwRC6YghriZGUMseixWc8VWwOpfgXEE8Aiqpv3XUqqumewcGWppSIWQgQ/exec";
+
+  var STORAGE_KEY = "karofi.session";
+
+  var APPS = [
+    {
+      key: "FC",
+      name: "Sale Forecast",
+      href: "/FC/",
+      desc: "Lập và chốt kế hoạch sản lượng theo kỳ cho từng đơn vị kinh doanh."
+    },
+    {
+      key: "OEM",
+      name: "OEM Portal",
+      href: "/OEM/",
+      desc: "Đơn hàng, doanh thu và công nợ kênh OEM."
+    },
+    {
+      key: "EXPORT",
+      name: "Export Hub",
+      href: "/export/pi-app.html",
+      desc: "Lập PI, sinh chứng từ và theo dõi lô hàng xuất khẩu."
+    }
+  ];
+
+  // ---------------------------------------------------------------
+  // Phiên đăng nhập dùng chung
+  // ---------------------------------------------------------------
+
+  function readSession() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      var s = JSON.parse(raw);
+      if (!s || !s.token) return null;
+      if (s.expiresAt && new Date(s.expiresAt).getTime() < Date.now()) {
+        localStorage.removeItem(STORAGE_KEY);
+        return null;
+      }
+      return s;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeSession(s) {
+    try {
+      if (s) localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+      else localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      // Trình duyệt chặn localStorage (chế độ ẩn danh): phiên chỉ sống
+      // trong tab này, và ba app kia sẽ hỏi đăng nhập lại. Không chặn việc.
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // Gọi API — giữ đúng cơ chế thử lại đã kiểm chứng ở app OEM:
+  // đường mạng tới script.google.com thỉnh thoảng trả về HTML thay vì
+  // JSON, nên phản hồi không có khoá 'result' được coi là hỏng và thử lại.
+  // ---------------------------------------------------------------
+
+  var MAX_RETRIES = 3;
+  var RETRY_DELAY_MS = 1500;
+  var TIMEOUT_MS = 60000;
+
+  function callApi(fn, args) {
+    return attempt(fn, args || [], 0);
+  }
+
+  function attempt(fn, args, n) {
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, TIMEOUT_MS);
+
+    return fetch(KAROFI_ID_API, {
+      method: "POST",
+      // text/plain: tránh preflight CORS mà Apps Script không trả lời được
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ fn: fn, args: args }),
+      signal: ctrl.signal
+    }).then(function (res) {
+      clearTimeout(timer);
+      if (!res.ok) throw new Error("__retry__HTTP " + res.status);
+      return res.text();
+    }).then(function (text) {
+      var json;
+      try {
+        json = JSON.parse(text);
+      } catch (e) {
+        throw new Error("__retry__Phản hồi không phải JSON");
+      }
+      // Lỗi do chính backend trả về là câu trả lời thật — không thử lại.
+      if (json && json.error) throw new Error(json.error);
+      if (!json || typeof json !== "object" || !("result" in json)) {
+        throw new Error("__retry__Phản hồi không hợp lệ");
+      }
+      return json.result;
+    }).catch(function (err) {
+      clearTimeout(timer);
+      var retryable = err.name === "AbortError" ||
+        err.message.indexOf("__retry__") === 0 ||
+        err.message.indexOf("Failed to fetch") >= 0 ||
+        err.message.indexOf("NetworkError") >= 0;
+      if (retryable && n < MAX_RETRIES) {
+        return new Promise(function (r) { setTimeout(r, RETRY_DELAY_MS * (n + 1)); })
+          .then(function () { return attempt(fn, args, n + 1); });
+      }
+      throw new Error(err.message.replace("__retry__", "") ||
+        "Không kết nối được máy chủ đăng nhập.");
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Giao diện
+  // ---------------------------------------------------------------
+
+  var el = {};
+  var summary = null;
+
+  function $(id) { return document.getElementById(id); }
+
+  function renderAccount() {
+    var box = el.account;
+    if (!box) return;
+    var s = readSession();
+    box.innerHTML = "";
+
+    if (!KAROFI_ID_API) {
+      var note = document.createElement("p");
+      note.className = "rail-note";
+      note.textContent = "Đăng nhập một lần chưa được bật (chưa dán URL Karofi ID).";
+      box.appendChild(note);
+      return;
+    }
+
+    if (!s) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "kid-mini kid-primary";
+      btn.textContent = "Đăng nhập";
+      btn.addEventListener("click", function () { openModal("login"); });
+      box.appendChild(btn);
+      return;
+    }
+
+    var who = document.createElement("div");
+    who.className = "kid-who";
+    var nm = document.createElement("div");
+    nm.className = "kid-who-name";
+    nm.textContent = s.user && s.user.fullName ? s.user.fullName : s.user.id;
+    var sub = document.createElement("div");
+    sub.className = "kid-who-sub";
+    sub.textContent = (s.user.apps || []).join(" · ") || "chưa được cấp app nào";
+    who.appendChild(nm);
+    who.appendChild(sub);
+
+    var actions = document.createElement("div");
+    actions.className = "kid-account-actions";
+    actions.appendChild(miniBtn("Đổi PIN", function () { openModal("pin"); }));
+    actions.appendChild(miniBtn("Đăng xuất", function () {
+      writeSession(null);
+      summary = null;
+      renderAll();
+    }));
+
+    box.appendChild(who);
+    box.appendChild(actions);
+  }
+
+  function miniBtn(label, onClick) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "kid-mini";
+    b.textContent = label;
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  function renderApps() {
+    var grid = el.appGrid;
+    if (!grid) return;
+    var s = readSession();
+    grid.innerHTML = "";
+
+    APPS.forEach(function (app) {
+      // Chưa đăng nhập thì thẻ VẪN là link mở được — mỗi app còn màn hình đăng
+      // nhập riêng của nó, và chặn đường đi từ dashboard sang app là bước lùi
+      // so với trước khi có cổng. Chỉ khoá khi đã đăng nhập mà không có quyền:
+      // lúc đó "không mở được" là câu trả lời thật, không phải rào cản thừa.
+      var hasClaim = s && (s.user.apps || []).indexOf(app.key) >= 0;
+      var locked = !!s && !hasClaim;
+      var node = document.createElement(locked ? "div" : "a");
+      node.className = "kid-app" + (locked ? " kid-locked" : "");
+      if (!locked) node.href = app.href;
+
+      var name = document.createElement("div");
+      name.className = "kid-app-name";
+      name.textContent = app.name;
+
+      var desc = document.createElement("div");
+      desc.className = "kid-app-desc";
+      desc.textContent = app.desc;
+
+      node.appendChild(name);
+      node.appendChild(desc);
+
+      var stats = (summary && summary.items || []).filter(function (i) { return i.app === app.key; });
+      if (stats.length) {
+        var box = document.createElement("div");
+        box.className = "kid-app-stats";
+        stats.forEach(function (st) {
+          var row = document.createElement("div");
+          row.className = "kid-stat";
+          var l = document.createElement("span");
+          l.className = "kid-stat-label";
+          l.textContent = st.label;
+          var v = document.createElement("span");
+          v.className = "kid-stat-value";
+          v.textContent = st.value;
+          row.appendChild(l);
+          row.appendChild(v);
+          box.appendChild(row);
+        });
+        node.appendChild(box);
+      }
+
+      var foot = document.createElement("div");
+      foot.className = "kid-app-foot";
+      foot.textContent = locked ? "Chưa có quyền" : "Mở app →";
+      node.appendChild(foot);
+
+      grid.appendChild(node);
+    });
+  }
+
+  function renderMeta() {
+    if (!el.appsMeta) return;
+    var s = readSession();
+    if (!KAROFI_ID_API) { el.appsMeta.textContent = ""; return; }
+    if (!s) { el.appsMeta.textContent = "Đăng nhập để xem số liệu tổng quan"; return; }
+    if (summary && summary.updatedAt) {
+      var d = new Date(summary.updatedAt);
+      el.appsMeta.textContent = "Số liệu lúc " +
+        ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2) +
+        " ngày " + ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2);
+    } else {
+      el.appsMeta.textContent = "Chưa có số liệu tổng quan";
+    }
+  }
+
+  function renderAll() {
+    renderAccount();
+    renderApps();
+    renderMeta();
+  }
+
+  function loadSummary() {
+    var s = readSession();
+    if (!KAROFI_ID_API || !s) return;
+    callApi("summary", [s.token]).then(function (res) {
+      summary = res;
+      renderApps();
+      renderMeta();
+    }).catch(function (err) {
+      // Hết hạn/bị thu hồi thì đưa về trạng thái chưa đăng nhập, im lặng.
+      if (/UNAUTHORIZED/.test(err.message)) {
+        writeSession(null);
+        renderAll();
+      }
+      // Lỗi khác: cứ để thẻ app hiện không có số, không chặn điều hướng.
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Modal
+  // ---------------------------------------------------------------
+
+  var mode = "login";
+
+  function openModal(which) {
+    mode = which;
+    var login = which === "login";
+    el.title.textContent = login ? "Đăng nhập" : "Đổi mã PIN";
+    el.sub.textContent = login
+      ? "Một tài khoản dùng chung cho Sale Forecast, OEM và Xuất khẩu."
+      : "PIN mới dùng cho cả ba app.";
+    el.loginFields.style.display = login ? "" : "none";
+    el.pinFields.style.display = login ? "none" : "";
+    el.submit.textContent = login ? "Đăng nhập" : "Đổi PIN";
+    setMsg("", "");
+    el.backdrop.classList.add("open");
+    setTimeout(function () { (login ? el.user : el.oldPin).focus(); }, 30);
+  }
+
+  function closeModal() {
+    el.backdrop.classList.remove("open");
+    el.pin.value = "";
+    el.oldPin.value = "";
+    el.newPin.value = "";
+    el.newPin2.value = "";
+  }
+
+  function setMsg(text, kind) {
+    el.msg.textContent = text;
+    el.msg.className = "kid-msg" + (kind ? " kid-" + kind : "");
+  }
+
+  function busy(on) {
+    el.submit.disabled = on;
+    el.submit.textContent = on
+      ? "Đang xử lý…"
+      : (mode === "login" ? "Đăng nhập" : "Đổi PIN");
+  }
+
+  function submitModal() {
+    if (mode === "login") {
+      var u = el.user.value.trim();
+      var p = el.pin.value.trim();
+      if (!u || !p) { setMsg("Nhập tên đăng nhập và PIN.", "bad"); return; }
+      busy(true);
+      callApi("login", [u, p]).then(function (res) {
+        writeSession({ token: res.token, user: res.user, expiresAt: res.expiresAt });
+        busy(false);
+        closeModal();
+        renderAll();
+        loadSummary();
+        // Đến đây từ một app (link có ?next=/OEM/) thì quay lại đúng chỗ đó.
+        // Chỉ nhận đường dẫn nội bộ bắt đầu bằng một dấu "/" — không nhận
+        // "//host" hay URL tuyệt đối, tránh bị lợi dụng để chuyển ra ngoài.
+        var next = new URLSearchParams(location.search).get("next");
+        if (next && /^\/[^/]/.test(next)) location.href = next;
+      }).catch(function (err) {
+        busy(false);
+        setMsg(err.message, "bad");
+      });
+      return;
+    }
+
+    var s = readSession();
+    if (!s) { setMsg("Phiên đã hết hạn, đăng nhập lại.", "bad"); return; }
+    var oldP = el.oldPin.value.trim();
+    var n1 = el.newPin.value.trim();
+    var n2 = el.newPin2.value.trim();
+    if (!oldP || !n1) { setMsg("Nhập đủ PIN hiện tại và PIN mới.", "bad"); return; }
+    if (n1 !== n2) { setMsg("Hai lần nhập PIN mới không giống nhau.", "bad"); return; }
+    busy(true);
+    callApi("changePin", [s.token, oldP, n1]).then(function () {
+      busy(false);
+      setMsg("Đã đổi PIN. Lần sau đăng nhập bằng PIN mới.", "good");
+      setTimeout(closeModal, 1400);
+    }).catch(function (err) {
+      busy(false);
+      setMsg(err.message, "bad");
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Khởi động
+  // ---------------------------------------------------------------
+
+  function init() {
+    el = {
+      account: $("kidAccount"),
+      appGrid: $("kidAppGrid"),
+      appsMeta: $("kidAppsMeta"),
+      backdrop: $("kidBackdrop"),
+      title: $("kidTitle"),
+      sub: $("kidSub"),
+      loginFields: $("kidLoginFields"),
+      pinFields: $("kidPinFields"),
+      user: $("kidUser"),
+      pin: $("kidPin"),
+      oldPin: $("kidOldPin"),
+      newPin: $("kidNewPin"),
+      newPin2: $("kidNewPin2"),
+      msg: $("kidMsg"),
+      submit: $("kidSubmit"),
+      cancel: $("kidCancel")
+    };
+    if (!el.appGrid) return;
+
+    el.submit.addEventListener("click", submitModal);
+    el.cancel.addEventListener("click", closeModal);
+    el.backdrop.addEventListener("click", function (e) {
+      if (e.target === el.backdrop) closeModal();
+    });
+    [el.user, el.pin, el.oldPin, el.newPin, el.newPin2].forEach(function (input) {
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") submitModal();
+      });
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && el.backdrop.classList.contains("open")) closeModal();
+    });
+
+    renderAll();
+    loadSummary();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 })();
 </script>
 </body>
