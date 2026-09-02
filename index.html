@@ -497,6 +497,29 @@
   .kid-app.kid-locked { opacity: .58; cursor: default; }
   .kid-app.kid-locked .kid-app-foot { color: var(--ink-faint); }
 
+  /* Chế độ rút gọn: chỉ hiện phần đăng nhập và dải thẻ ứng dụng.
+     Đây là ẩn HIỂN THỊ, không phải chặn truy cập — trang này là trang tĩnh
+     công khai, toàn bộ danh mục nằm sẵn trong HTML. Ai xem mã nguồn vẫn đọc
+     được. Muốn giấu thật thì phải đưa danh mục ra sau API. */
+  body.kid-limited .rail-nav,
+  body.kid-limited .rail-foot,
+  body.kid-limited .main > .topbar,
+  body.kid-limited .main > .tabs,
+  body.kid-limited .main > .content { display: none; }
+  /* Bỏ dải nền nổi khi rút gọn: nếu giữ, trang thành một thanh nổi ở trên và
+     một khoảng trống lớn bên dưới, trông như tải hỏng. Bỏ đi thì nó đọc như
+     một trang mở ứng dụng. */
+  body.kid-limited .kid-apps {
+    border-bottom: none;
+    background: transparent;
+    padding-top: 28px;
+  }
+  body.kid-limited .rail { justify-content: flex-start; }
+  /* Chỉ còn ba thẻ trong cả vùng chính, nên đưa chúng về giữa thay vì dính
+     mép trên và bỏ lại một khoảng trống lớn phía dưới. */
+  body.kid-limited .main { justify-content: center; }
+  body.kid-limited .kid-app-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+
   .kid-modal .field:last-of-type { margin-bottom: 4px; }
   .kid-msg { font-size: 12.5px; line-height: 1.5; margin: 8px 0 0; min-height: 1em; }
   .kid-msg.kid-bad { color: var(--critical); }
@@ -1645,7 +1668,11 @@
       node.appendChild(name);
       node.appendChild(desc);
 
-      var stats = (summary && summary.items || []).filter(function (i) { return i.app === app.key; });
+      // Thẻ bị khoá thì không hiện số liệu: người không vào được app đó cũng
+      // không có việc gì với con số của nó. Máy chủ đã lọc theo quyền rồi,
+      // nhưng đây là chỗ hiển thị nên tự kiểm lại một lần nữa.
+      var stats = locked ? [] :
+        (summary && summary.items || []).filter(function (i) { return i.app === app.key; });
       if (stats.length) {
         var box = document.createElement("div");
         box.className = "kid-app-stats";
@@ -1689,10 +1716,29 @@
     }
   }
 
+  /**
+   * Ai thấy toàn bộ dashboard (menu nhóm công việc), ai chỉ thấy đăng nhập +
+   * thẻ ứng dụng. Cờ do bảng Users bên Karofi ID quyết định (cột portal_full),
+   * không hardcode ở đây — thêm/bớt người chỉ cần sửa một ô Sheet.
+   *
+   * Backend đời cũ chưa gửi cờ này thì `portalFull` là undefined; khi đó giữ
+   * nguyên hành vi cũ (hiện đủ) thay vì ẩn dashboard của tất cả mọi người —
+   * để lúc mới đẩy cổng lên mà backend chưa kịp cập nhật thì không ai mất gì.
+   */
+  function isFullView() {
+    if (!KAROFI_ID_API) return true;          // chưa bật đăng nhập chung
+    var s = readSession();
+    if (!s) return false;                      // chưa đăng nhập
+    var flag = s.user && s.user.portalFull;
+    if (typeof flag !== 'boolean') return true; // backend chưa gửi cờ
+    return flag;
+  }
+
   function renderAll() {
     renderAccount();
     renderApps();
     renderMeta();
+    document.body.classList.toggle('kid-limited', !isFullView());
   }
 
   function loadSummary() {
