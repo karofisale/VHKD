@@ -1,0 +1,26 @@
+{
+  "name": "Karofi Portal",
+  "short_name": "Karofi",
+  "description": "Cổng vận hành Karofi — Sale Forecast, OEM và Xuất khẩu",
+  "start_url": "/VHKD/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "lang": "vi",
+  "theme_color": "#0E6E64",
+  "background_color": "#F2F4F1",
+  "icons": [
+    {
+      "src": "/VHKD/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/VHKD/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

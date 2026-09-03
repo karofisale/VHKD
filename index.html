@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trung Tâm Vận Hành Karofi</title>
+<!-- Ứng dụng đã cài (PWA): scope "/" trong manifest cho cả bốn app cùng nằm
+     trong phạm vi ứng dụng. Không có nó, Chrome coi mọi đường dẫn ngoài
+     /VHKD/ là "ra khỏi ứng dụng" và chèn một thanh báo origin ở đầu cửa sổ
+     mỗi lần bấm sang FC, OEM hay Xuất khẩu. -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0E6E64">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+
 <style>
   :root {
     --bg: #F2F4F1;
