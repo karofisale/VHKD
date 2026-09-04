@@ -1771,7 +1771,9 @@
       var s = JSON.parse(raw);
       if (!s || !s.token) return null;
       if (s.expiresAt && new Date(s.expiresAt).getTime() < Date.now()) {
-        localStorage.removeItem(STORAGE_KEY);
+        // Hết hạn thì dọn luôn phiên riêng của ba app — nếu không, phiên chung
+        // hết hạn mà phiên riêng vẫn cho vào app như thường.
+        clearAllAppSessions();
         return null;
       }
       return s;
@@ -1788,6 +1790,46 @@
       // Trình duyệt chặn localStorage (chế độ ẩn danh): phiên chỉ sống
       // trong tab này, và ba app kia sẽ hỏi đăng nhập lại. Không chặn việc.
     }
+  }
+
+  /**
+   * Phiên RIÊNG của từng app, còn sót lại từ thời ba app chưa dùng cổng chung.
+   *
+   * Vì sao cổng phải biết những khoá này: xoá mỗi 'karofi.session' là CHƯA
+   * đăng xuất. Cả ba client đều có đường lùi — không thấy phiên chung thì lấy
+   * phiên riêng trong localStorage (OEM: api.js loadSession; FC: auth.js
+   * readStoredSession; Export: khôi phục từ exportops_session) — và cả ba
+   * backend đều còn chấp nhận token cũ trong CacheService thêm 6 giờ. Nên
+   * trên máy dùng chung, người sau mở /OEM/ là vào thẳng phiên người trước,
+   * không qua màn hình nào.
+   *
+   * Cùng origin karofisale.github.io nên cổng xoá được trực tiếp. Đây là chỗ
+   * DUY NHẤT giữ danh sách — thêm app mới thì thêm khoá vào đây.
+   *
+   * CỐ Ý KHÔNG xoá exportops_theme và exportops_showLineImg: đó là tuỳ chọn
+   * hiển thị của máy, không phải danh tính hay dữ liệu.
+   */
+  var APP_SESSION_KEYS = [
+    "karofi_fc_session",            // FC   — client/src/services/auth.js
+    "oem_session_v1",               // OEM  — src/services/api.js
+    "exportops_session",            // Export — gas/App.html
+    "exportops_remembered_user",    // Export — tên gợi sẵn ở form đăng nhập riêng
+    "exportops_cache_products"      // Export — bản chụp danh mục sản phẩm (TTL 2h)
+  ];
+
+  // Cache dữ liệu kinh doanh của OEM (~590KB lịch sử giao dịch) nằm ở
+  // IndexedDB chứ không phải localStorage — xem src/services/dataCache.js.
+  var OEM_CACHE_DB = "oem_app_cache";
+
+  /** Đăng xuất thật: phiên chung + mọi phiên riêng + cache dữ liệu trên máy. */
+  function clearAllAppSessions() {
+    writeSession(null);
+    APP_SESSION_KEYS.forEach(function (k) {
+      try { localStorage.removeItem(k); } catch (e) {}
+    });
+    try {
+      if (window.indexedDB && indexedDB.deleteDatabase) indexedDB.deleteDatabase(OEM_CACHE_DB);
+    } catch (e) {}
   }
 
   // ---------------------------------------------------------------
@@ -1896,7 +1938,7 @@
     actions.className = "kid-account-actions";
     actions.appendChild(miniBtn("Đổi PIN", "PIN", openPinModal));
     actions.appendChild(miniBtn("Đăng xuất", "Thoát", function () {
-      writeSession(null);
+      clearAllAppSessions();
       summary = null;
       renderAll();
     }));
@@ -2078,8 +2120,10 @@
       renderMeta();
     }).catch(function (err) {
       // Hết hạn/bị thu hồi thì đưa về trạng thái chưa đăng nhập, im lặng.
+      // Dọn CẢ phiên riêng của ba app: thu hồi token chung mà để phiên riêng
+      // sống tiếp 6 giờ thì việc thu hồi không có tác dụng gì.
       if (/UNAUTHORIZED/.test(err.message)) {
-        writeSession(null);
+        clearAllAppSessions();
         renderAll();
       }
       // Lỗi khác: cứ để thẻ app hiện không có số, không chặn điều hướng.
