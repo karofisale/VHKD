@@ -1,4 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Karofi Portal">
-  <rect width="512" height="512" fill="#0E6E64"/>
-  <path d="M192 160h48v88l82-88h60l-96 100 96 116h-60l-82-104v104h-48z" fill="#FFFFFF"/>
+  <defs>
+    <linearGradient id="gm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00A0E9"/>
+      <stop offset="1" stop-color="#004E89"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#gm)"/>
+  <path d="M256 138c-66 78-107 131-107 180a107 107 0 1 0 214 0c0-49-41-102-107-180Z" fill="#FFFFFF"/>
 </svg>

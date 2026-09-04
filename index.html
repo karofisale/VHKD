@@ -9,73 +9,107 @@
      /VHKD/ là "ra khỏi ứng dụng" và chèn một thanh báo origin ở đầu cửa sổ
      mỗi lần bấm sang FC, OEM hay Xuất khẩu. -->
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0E6E64">
+<meta name="theme-color" content="#00A0E9">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 
+<!-- Cùng bộ chữ với app OEM và Sale Forecast. Ba cửa sổ mở cạnh nhau mà mỗi
+     cửa sổ một kiểu chữ thì trông như ba sản phẩm của ba công ty. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <style>
+  /* ===================================================================
+     Nhận diện Karofi. Không phải bảng màu tự nghĩ ra: đây đúng bộ token
+     mà app OEM đang chạy (src/index.css) — cyan #00A0E9 và navy #004E89
+     của logo. Cổng và ba app mở cạnh nhau nên phải cùng một màu, cùng
+     một kiểu chữ, nếu không người dùng sẽ thấy bốn sản phẩm rời rạc.
+
+     Tên biến giữ nguyên như cũ (--accent, --ink, --line…) để toàn bộ CSS
+     phía dưới không phải sửa theo; chỉ giá trị đổi.
+     =================================================================== */
   :root {
-    --bg: #F2F4F1;
+    --bg: #F4F7FA;
     --bg-elevated: #FFFFFF;
-    --bg-sunken: #E7EAE5;
-    --ink: #1A211E;
-    --ink-soft: #545F5A;
-    --ink-faint: #8A938D;
-    --line: #DBDFD8;
-    --line-soft: #E9ECE6;
-    --accent: #0E6E64;
+    --bg-sunken: #EDF2F7;
+    --ink: #0F172A;
+    --ink-soft: #475569;
+    --ink-faint: #94A3B8;
+    --line: #E2E8F0;
+    --line-soft: #EEF2F6;
+
+    --accent: #00A0E9;            /* nền, viền, mảng màu */
     --accent-ink: #FFFFFF;
-    --accent-soft: #E1EFEB;
-    --accent-strong: #0A5049;
-    --warm: #B5691F;
-    --warm-soft: #F5E7D6;
-    --success: #2E7D46;
-    --warning: #9C6B0B;
-    --critical: #B3432B;
-    --shadow: 0 1px 2px rgba(26,33,30,0.04), 0 4px 16px rgba(26,33,30,0.06);
-    --font-display: Cambria, Georgia, 'Times New Roman', serif;
-    --font-body: 'Source Sans 3', 'Segoe UI', Helvetica, Arial, sans-serif;
-    --font-mono: 'IBM Plex Mono', Consolas, 'SFMono-Regular', Menlo, monospace;
-    --radius: 10px;
+    --accent-soft: rgba(0,160,233,0.10);
+    /* Chữ màu nhấn trên nền trắng phải là navy, không phải cyan: #00A0E9
+       trên trắng chỉ đạt ~2.6:1, dưới ngưỡng đọc được. Navy đạt ~8:1. */
+    --accent-strong: #004E89;
+    --brand-grad: linear-gradient(135deg, #00A0E9, #004E89);
+
+    --warm: #B45309;
+    --warm-soft: #FEF3C7;
+    --success: #047857;
+    --warning: #B45309;
+    --critical: #DC2626;
+
+    --shadow: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+    --shadow-lift: 0 10px 30px rgba(0,78,137,0.10), 0 2px 6px rgba(15,23,42,0.05);
+
+    --font-display: 'Plus Jakarta Sans', 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-body: 'Plus Jakarta Sans', 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', Consolas, 'SFMono-Regular', Menlo, monospace;
+    --radius: 12px;
   }
+
+  /* Dải tối: cyan sáng lên (#35B9F5) như bên OEM, vì cyan gốc trên nền đen
+     quá tối để đọc. */
   @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #121614;
-      --bg-elevated: #1A201D;
-      --bg-sunken: #0D110F;
-      --ink: #E8ECE8;
-      --ink-soft: #A2ACA6;
-      --ink-faint: #6D766F;
-      --line: #2A322D;
-      --line-soft: #232B26;
-      --accent: #4FBBAA;
-      --accent-ink: #06201C;
-      --accent-soft: #1B302C;
-      --accent-strong: #6ED0C0;
-      --warm: #E2954F;
-      --warm-soft: #33271A;
-      --success: #4CAF6B;
-      --warning: #D9A441;
-      --critical: #E2725A;
-      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    :root:not([data-theme="light"]) {
+      --bg: #0E1620;
+      --bg-elevated: #16212E;
+      --bg-sunken: #111C27;
+      --ink: #E8EFF5;
+      --ink-soft: #A6BACD;
+      --ink-faint: #7690A8;
+      --line: #27384A;
+      --line-soft: #1E2C3B;
+      --accent: #35B9F5;
+      --accent-ink: #062330;
+      --accent-soft: rgba(53,185,245,0.14);
+      --accent-strong: #7FD3F9;
+      --brand-grad: linear-gradient(135deg, #35B9F5, #1B6FA8);
+      --warm: #F0B357;
+      --warm-soft: rgba(240,179,87,0.16);
+      --success: #52C99F;
+      --warning: #F0B357;
+      --critical: #FF8A90;
+      --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+      --shadow-lift: 0 10px 30px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.35);
     }
   }
   :root[data-theme="dark"] {
-    --bg: #121614; --bg-elevated: #1A201D; --bg-sunken: #0D110F;
-    --ink: #E8ECE8; --ink-soft: #A2ACA6; --ink-faint: #6D766F;
-    --line: #2A322D; --line-soft: #232B26;
-    --accent: #4FBBAA; --accent-ink: #06201C; --accent-soft: #1B302C; --accent-strong: #6ED0C0;
-    --warm: #E2954F; --warm-soft: #33271A;
-    --success: #4CAF6B; --warning: #D9A441; --critical: #E2725A;
-    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    --bg: #0E1620; --bg-elevated: #16212E; --bg-sunken: #111C27;
+    --ink: #E8EFF5; --ink-soft: #A6BACD; --ink-faint: #7690A8;
+    --line: #27384A; --line-soft: #1E2C3B;
+    --accent: #35B9F5; --accent-ink: #062330;
+    --accent-soft: rgba(53,185,245,0.14); --accent-strong: #7FD3F9;
+    --brand-grad: linear-gradient(135deg, #35B9F5, #1B6FA8);
+    --warm: #F0B357; --warm-soft: rgba(240,179,87,0.16);
+    --success: #52C99F; --warning: #F0B357; --critical: #FF8A90;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-lift: 0 10px 30px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.35);
   }
   :root[data-theme="light"] {
-    --bg: #F2F4F1; --bg-elevated: #FFFFFF; --bg-sunken: #E7EAE5;
-    --ink: #1A211E; --ink-soft: #545F5A; --ink-faint: #8A938D;
-    --line: #DBDFD8; --line-soft: #E9ECE6;
-    --accent: #0E6E64; --accent-ink: #FFFFFF; --accent-soft: #E1EFEB; --accent-strong: #0A5049;
-    --warm: #B5691F; --warm-soft: #F5E7D6;
-    --success: #2E7D46; --warning: #9C6B0B; --critical: #B3432B;
-    --shadow: 0 1px 2px rgba(26,33,30,0.04), 0 4px 16px rgba(26,33,30,0.06);
+    --bg: #F4F7FA; --bg-elevated: #FFFFFF; --bg-sunken: #EDF2F7;
+    --ink: #0F172A; --ink-soft: #475569; --ink-faint: #94A3B8;
+    --line: #E2E8F0; --line-soft: #EEF2F6;
+    --accent: #00A0E9; --accent-ink: #FFFFFF;
+    --accent-soft: rgba(0,160,233,0.10); --accent-strong: #004E89;
+    --brand-grad: linear-gradient(135deg, #00A0E9, #004E89);
+    --warm: #B45309; --warm-soft: #FEF3C7;
+    --success: #047857; --warning: #B45309; --critical: #DC2626;
+    --shadow: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+    --shadow-lift: 0 10px 30px rgba(0,78,137,0.10), 0 2px 6px rgba(15,23,42,0.05);
   }
 
   * { box-sizing: border-box; }
@@ -93,7 +127,7 @@
 
   .app {
     display: flex;
-    min-height: 100vh;
+    min-height: calc(100vh - 60px);
   }
 
   /* ---------- Sidebar ---------- */
@@ -408,14 +442,16 @@
   }
 
   @media (max-width: 780px) {
-    .app { flex-direction: column; }
-    .rail { flex: none; width: 100%; border-right: none; border-bottom: 1px solid var(--line); flex-direction: row; align-items: center; overflow-x: auto; padding: 12px; }
+    .app { flex-direction: column; min-height: calc(100vh - 56px); }
+    .rail { flex: none; width: 100%; border-right: none; border-bottom: 1px solid var(--line); flex-direction: row; align-items: center; overflow-x: auto; padding: 10px 14px; }
+    /* Tên tổ chức và tiêu đề đã nằm trên thanh trên cùng, không lặp lại ở đây. */
     .rail-head { display: none; }
     .rail-nav { flex-direction: row; }
     .rail-btn { white-space: nowrap; }
     .rail-foot { margin-top: 0; margin-left: 8px; border-top: none; padding-top: 0; flex: none; }
     .rail-note { display: none; }
-    .topbar, .tabs, .content { padding-left: 18px; padding-right: 18px; }
+    .topbar, .tabs, .content { padding-left: 16px; padding-right: 16px; }
+    .kid-apps { padding: 18px 16px 20px; }
   }
 
   /* ===================================================================
@@ -533,15 +569,225 @@
   .kid-msg.kid-bad { color: var(--critical); }
   .kid-msg.kid-good { color: var(--success); }
   .kid-note { font-size: 12px; color: var(--ink-faint); margin: 6px 0 0; line-height: 1.5; }
+
+  /* ===================================================================
+     Thanh trên cùng + cổng đăng nhập (2026-09)
+
+     Trước đây khối tài khoản nằm trong .rail-head, mà .rail-head bị
+     display:none dưới 780px — nghĩa là trên điện thoại KHÔNG có nút đăng
+     nhập nào cả, chỉ còn một dải xám trống và ba thẻ app. Nên tài khoản
+     được đưa ra một thanh riêng, luôn hiện ở mọi khổ màn hình.
+
+     Và thay vì bắt bấm nút mới mở hộp thoại, khi chưa đăng nhập thì cổng
+     đăng nhập hiện thẳng ra giữa trang: trên điện thoại, một hộp thoại
+     phải gọi ra mới thấy là một bước thừa.
+     =================================================================== */
+  .kid-topbar {
+    position: sticky;
+    top: 0;
+    /* Dưới hộp thoại (50) và dưới toast (60): thanh dính mà đè lên lớp phủ
+       thì hộp đổi PIN sẽ bị thủng một mảng ở đầu màn hình. */
+    z-index: 40;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 24px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--line);
+    box-shadow: var(--shadow);
+  }
+  .kid-brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    text-decoration: none;
+    color: inherit;
+    min-width: 0;
+    /* Không co: nhận diện là phần cố định của thanh. Chỗ hẹp thì cắt tên
+       người dùng, không cắt tên sản phẩm. */
+    flex: 0 0 auto;
+  }
+  .kid-mark {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--brand-grad);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 2px 8px rgba(0,160,233,0.30);
+  }
+  .kid-mark svg { width: 19px; height: 19px; display: block; }
+  .kid-brand-text { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; overflow: hidden; }
+  .kid-brand-name {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .kid-brand-sub {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Khối tài khoản: nằm ngang trong thanh, không còn là cột trong sidebar. */
+  .kid-account {
+    display: flex;
+    /* flex-direction phải ghi rõ: luật .kid-account cũ (khi khối này còn nằm
+       trong cột trái) đặt column, và nếu không ghi đè thì tên người dùng xếp
+       chồng lên hai nút, tràn ra ngoài thanh cao 56px. */
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    /* Nhận hết phần còn lại rồi tự co: tên dài như "Nguyễn Thị Thu Thuỷ
+       Trang" phải rút gọn bằng dấu ba chấm chứ không đè lên nhận diện. */
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border-top: none;
+  }
+  .kid-who {
+    display: flex; flex-direction: column; gap: 1px;
+    flex: 0 1 auto; min-width: 0; align-items: flex-end;
+  }
+  .kid-who-name {
+    font-size: 13px; font-weight: 700; color: var(--ink);
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .kid-who-sub {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: .02em; color: var(--ink-faint);
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .kid-account-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+  .kid-mini { border-radius: 8px; white-space: nowrap; }
+  .kid-short { display: none; }
+
+  /* ---------- Cổng đăng nhập ---------- */
+  .kid-gate { display: none; padding: 40px 24px 8px; }
+  body.kid-anon .kid-gate { display: block; }
+  .kid-gate-card {
+    max-width: 380px;
+    margin: 0 auto;
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lift);
+    padding: 26px 24px 22px;
+    text-align: center;
+  }
+  .kid-gate-mark {
+    width: 52px; height: 52px; margin: 0 auto 14px;
+    border-radius: 15px;
+    background: var(--brand-grad);
+    display: grid; place-items: center;
+    box-shadow: 0 6px 18px rgba(0,160,233,0.32);
+  }
+  .kid-gate-mark svg { width: 28px; height: 28px; display: block; }
+  .kid-gate-card h2 {
+    font-family: var(--font-display);
+    font-size: 20px; font-weight: 800; letter-spacing: -0.01em;
+    margin: 0 0 5px; color: var(--ink);
+  }
+  .kid-gate-card .kid-gate-lead {
+    margin: 0 0 18px; font-size: 13px; line-height: 1.5; color: var(--ink-soft);
+  }
+  .kid-gate-card .field { text-align: left; margin-bottom: 12px; }
+  .kid-gate-card .field label {
+    display: block; font-size: 11.5px; font-weight: 700; color: var(--ink-soft); margin-bottom: 5px;
+  }
+  .kid-gate-card .field input {
+    width: 100%;
+    font: inherit;
+    font-size: 15px;              /* dưới 16px là iOS tự phóng to trang khi gõ */
+    padding: 11px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .kid-gate-card .field input:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .kid-gate-submit {
+    width: 100%;
+    margin-top: 4px;
+    padding: 12px 14px;
+    font-size: 14.5px;
+    border-radius: 10px;
+    background: var(--brand-grad);
+    color: #FFFFFF;
+    border: none;
+  }
+  .kid-gate-submit:disabled { opacity: .6; cursor: default; }
+  .kid-gate-card .kid-msg { text-align: left; }
+  .kid-gate-card .kid-note { text-align: left; margin-top: 12px; }
+
+  /* ---------- Thẻ ứng dụng ---------- */
+  .kid-app {
+    border-radius: 14px;
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow);
+    transition: border-color .15s, transform .15s, box-shadow .15s;
+  }
+  a.kid-app:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+  }
+  .kid-app-name { font-size: 15.5px; font-weight: 800; letter-spacing: -0.01em; }
+  .kid-app-foot { color: var(--accent-strong); font-weight: 600; }
+  .kid-apps { background: transparent; }
+
+  /* Chế độ rút gọn: thanh trên cùng đã mang tên và nhận diện rồi, nên cả
+     cột trái bỏ đi thay vì để lại một cột 252px gần như trống. */
+  body.kid-limited .rail { display: none; }
+  body.kid-anon .main { justify-content: flex-start; }
+
+  @media (max-width: 780px) {
+    .kid-topbar { height: 56px; padding: 0 14px; }
+    .kid-brand-sub { display: none; }
+    .kid-who-sub { display: none; }
+    .kid-mini { padding: 6px 9px; font-size: 11.5px; }
+    .kid-full { display: none; }
+    .kid-short { display: inline; }
+    .kid-gate { padding: 26px 16px 4px; }
+    .kid-gate-card { padding: 22px 18px 20px; }
+  }
 </style>
 </head>
 <body>
+<!-- Thanh trên cùng: nhận diện Karofi bên trái, tài khoản bên phải. Luôn hiện ở
+     mọi khổ màn hình — trước đây tài khoản nằm trong cột trái nên trên điện
+     thoại bị ẩn theo cả cột, không còn đường nào để đăng nhập. -->
+<header class="kid-topbar">
+  <a class="kid-brand" href="./" aria-label="Karofi Portal">
+    <span class="kid-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2C7.9 7 5.4 10.4 5.4 13.4a6.6 6.6 0 1 0 13.2 0c0-3-2.5-6.4-6.6-11.2Z" fill="#FFFFFF"/></svg></span>
+    <span class="kid-brand-text">
+      <span class="kid-brand-name">Karofi Portal</span>
+      <span class="kid-brand-sub">Vận hành Kinh doanh</span>
+    </span>
+  </a>
+  <div class="kid-account" id="kidAccount"></div>
+</header>
+
 <div class="app">
   <aside class="rail">
+    <!-- Thanh trên cùng đã nói tên sản phẩm rồi. Nhắc lại ở đây thành ba
+         cách gọi cùng một thứ trên cùng một màn hình, nên cột trái chỉ giữ
+         một dòng nói nó là danh mục gì. -->
     <div class="rail-head">
-      <div class="org">Karofi · Vận hành Kinh doanh</div>
-      <h1>Trung Tâm Vận Hành Karofi</h1>
-      <div class="kid-account" id="kidAccount"></div>
+      <div class="org">Danh mục</div>
+      <h1>Kỹ năng &amp; công cụ</h1>
     </div>
     <nav class="rail-nav" id="railNav"></nav>
     <div class="rail-foot">
@@ -551,6 +797,27 @@
   </aside>
 
   <main class="main">
+    <section class="kid-gate" id="kidGate" aria-label="Đăng nhập">
+      <div class="kid-gate-card">
+        <div class="kid-gate-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2C7.9 7 5.4 10.4 5.4 13.4a6.6 6.6 0 1 0 13.2 0c0-3-2.5-6.4-6.6-11.2Z" fill="#FFFFFF"/></svg></div>
+        <h2>Đăng nhập Karofi</h2>
+        <p class="kid-gate-lead">Một tài khoản, một mã PIN cho Sale Forecast, OEM và Xuất khẩu.</p>
+
+        <div class="field">
+          <label for="kidUser">Tên đăng nhập</label>
+          <input id="kidUser" type="text" autocomplete="username" placeholder="Tên bạn vẫn dùng, hoặc email công ty" />
+        </div>
+        <div class="field">
+          <label for="kidPin">Mã PIN</label>
+          <input id="kidPin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN hiện tại của bạn" />
+        </div>
+
+        <p class="kid-msg" id="kidMsg"></p>
+        <button class="btn kid-gate-submit" id="kidSubmit" type="button">Đăng nhập</button>
+        <p class="kid-note">Vẫn dùng đúng PIN bạn đang có ở bất kỳ app nào trong ba app — không cần đổi. Chưa đăng nhập ở đây thì vẫn mở được từng app và đăng nhập riêng như cũ.</p>
+      </div>
+    </section>
+
     <section class="kid-apps" aria-label="Ứng dụng vận hành">
       <div class="kid-apps-head">
         <div class="eyebrow">Ứng dụng vận hành</div>
@@ -1408,44 +1675,32 @@
   render();
 })();
 </script>
+<!-- Hộp thoại này giờ chỉ còn việc đổi PIN. Việc đăng nhập đã chuyển ra cổng
+     hiện thẳng giữa trang, nên không còn hai bộ ô nhập trùng id nữa. -->
 <div class="modal-backdrop" id="kidBackdrop">
   <div class="modal kid-modal">
-    <h3 id="kidTitle">Đăng nhập</h3>
-    <p class="sub" id="kidSub">Một tài khoản dùng chung cho Sale Forecast, OEM và Xuất khẩu.</p>
+    <h3>Đổi mã PIN</h3>
+    <p class="sub">PIN mới dùng cho cả ba app.</p>
 
-    <div id="kidLoginFields">
-      <div class="field">
-        <label for="kidUser">Tên đăng nhập</label>
-        <input id="kidUser" type="text" autocomplete="username" placeholder="Tên bạn vẫn dùng để vào app, hoặc email công ty" />
-      </div>
-      <div class="field">
-        <label for="kidPin">Mã PIN</label>
-        <input id="kidPin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN hiện tại của bạn" />
-      </div>
-      <p class="kid-note">Vẫn dùng đúng PIN bạn đang có ở bất kỳ app nào trong ba app — không cần đổi.</p>
+    <div class="field">
+      <label for="kidOldPin">PIN hiện tại</label>
+      <input id="kidOldPin" type="password" inputmode="numeric" autocomplete="current-password" />
     </div>
-
-    <div id="kidPinFields" style="display:none">
-      <div class="field">
-        <label for="kidOldPin">PIN hiện tại</label>
-        <input id="kidOldPin" type="password" inputmode="numeric" autocomplete="current-password" />
-      </div>
-      <div class="field">
-        <label for="kidNewPin">PIN mới</label>
-        <input id="kidNewPin" type="password" inputmode="numeric" autocomplete="new-password" />
-      </div>
-      <div class="field">
-        <label for="kidNewPin2">Nhập lại PIN mới</label>
-        <input id="kidNewPin2" type="password" inputmode="numeric" autocomplete="new-password" />
-      </div>
-      <p class="kid-note">Ít nhất 4 chữ số, không phải dãy giống nhau hay liên tiếp.</p>
+    <div class="field">
+      <label for="kidNewPin">PIN mới</label>
+      <input id="kidNewPin" type="password" inputmode="numeric" autocomplete="new-password" />
     </div>
+    <div class="field">
+      <label for="kidNewPin2">Nhập lại PIN mới</label>
+      <input id="kidNewPin2" type="password" inputmode="numeric" autocomplete="new-password" />
+    </div>
+    <p class="kid-note">Ít nhất 4 chữ số, không phải dãy giống nhau hay liên tiếp.</p>
 
-    <p class="kid-msg" id="kidMsg"></p>
+    <p class="kid-msg" id="kidPinMsg"></p>
 
     <div class="modal-actions">
       <button class="btn btn-ghost" id="kidCancel" type="button">Đóng</button>
-      <button class="btn btn-primary" id="kidSubmit" type="button">Đăng nhập</button>
+      <button class="btn btn-primary" id="kidPinSubmit" type="button">Đổi PIN</button>
     </div>
   </div>
 </div>
@@ -1598,19 +1853,21 @@
     box.innerHTML = "";
 
     if (!KAROFI_ID_API) {
-      var note = document.createElement("p");
-      note.className = "rail-note";
-      note.textContent = "Đăng nhập một lần chưa được bật (chưa dán URL Karofi ID).";
+      var note = document.createElement("span");
+      note.className = "kid-who-sub";
+      note.textContent = "Chưa bật đăng nhập chung";
       box.appendChild(note);
       return;
     }
 
+    // Chưa đăng nhập: cổng đăng nhập đã hiện sẵn giữa trang rồi, nên nút ở đây
+    // chỉ còn việc đưa con trỏ tới đó khi người dùng đã cuộn xuống dưới.
     if (!s) {
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "kid-mini kid-primary";
       btn.textContent = "Đăng nhập";
-      btn.addEventListener("click", function () { openModal("login"); });
+      btn.addEventListener("click", focusGate);
       box.appendChild(btn);
       return;
     }
@@ -1628,8 +1885,8 @@
 
     var actions = document.createElement("div");
     actions.className = "kid-account-actions";
-    actions.appendChild(miniBtn("Đổi PIN", function () { openModal("pin"); }));
-    actions.appendChild(miniBtn("Đăng xuất", function () {
+    actions.appendChild(miniBtn("Đổi PIN", "PIN", openPinModal));
+    actions.appendChild(miniBtn("Đăng xuất", "Thoát", function () {
       writeSession(null);
       summary = null;
       renderAll();
@@ -1639,13 +1896,32 @@
     box.appendChild(actions);
   }
 
-  function miniBtn(label, onClick) {
+  /**
+   * Hai nhãn cho mỗi nút: bản đầy đủ trên màn hình rộng, bản ngắn trên điện
+   * thoại. CSS chọn hiện cái nào — ở 375px, "Đổi PIN" + "Đăng xuất" cộng với
+   * tên người dùng là tràn thanh.
+   */
+  function miniBtn(labelFull, labelShort, onClick) {
     var b = document.createElement("button");
     b.type = "button";
     b.className = "kid-mini";
-    b.textContent = label;
+    b.title = labelFull;
+    var f = document.createElement("span");
+    f.className = "kid-full";
+    f.textContent = labelFull;
+    var t = document.createElement("span");
+    t.className = "kid-short";
+    t.textContent = labelShort;
+    b.appendChild(f);
+    b.appendChild(t);
     b.addEventListener("click", onClick);
     return b;
+  }
+
+  function focusGate() {
+    if (!el.gate || !el.user) return;
+    el.gate.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(function () { el.user.focus(); }, 240);
   }
 
   function renderApps() {
@@ -1747,6 +2023,10 @@
     renderApps();
     renderMeta();
     document.body.classList.toggle('kid-limited', !isFullView());
+    // kid-anon bật cổng đăng nhập giữa trang. Tách riêng khỏi kid-limited vì
+    // hai việc khác nhau: kid-limited là "đã đăng nhập nhưng không được xem
+    // dashboard", kid-anon là "chưa đăng nhập".
+    document.body.classList.toggle('kid-anon', !!KAROFI_ID_API && !readSession());
   }
 
   function loadSummary() {
@@ -1770,26 +2050,14 @@
   // Modal
   // ---------------------------------------------------------------
 
-  var mode = "login";
-
-  function openModal(which) {
-    mode = which;
-    var login = which === "login";
-    el.title.textContent = login ? "Đăng nhập" : "Đổi mã PIN";
-    el.sub.textContent = login
-      ? "Một tài khoản dùng chung cho Sale Forecast, OEM và Xuất khẩu."
-      : "PIN mới dùng cho cả ba app.";
-    el.loginFields.style.display = login ? "" : "none";
-    el.pinFields.style.display = login ? "none" : "";
-    el.submit.textContent = login ? "Đăng nhập" : "Đổi PIN";
-    setMsg("", "");
+  function openPinModal() {
+    setPinMsg("", "");
     el.backdrop.classList.add("open");
-    setTimeout(function () { (login ? el.user : el.oldPin).focus(); }, 30);
+    setTimeout(function () { el.oldPin.focus(); }, 30);
   }
 
   function closeModal() {
     el.backdrop.classList.remove("open");
-    el.pin.value = "";
     el.oldPin.value = "";
     el.newPin.value = "";
     el.newPin2.value = "";
@@ -1800,88 +2068,105 @@
     el.msg.className = "kid-msg" + (kind ? " kid-" + kind : "");
   }
 
-  function busy(on) {
-    el.submit.disabled = on;
-    el.submit.textContent = on
-      ? "Đang xử lý…"
-      : (mode === "login" ? "Đăng nhập" : "Đổi PIN");
+  function setPinMsg(text, kind) {
+    el.pinMsg.textContent = text;
+    el.pinMsg.className = "kid-msg" + (kind ? " kid-" + kind : "");
   }
 
-  function submitModal() {
-    if (mode === "login") {
-      var u = el.user.value.trim();
-      var p = el.pin.value.trim();
-      if (!u || !p) { setMsg("Nhập tên đăng nhập và PIN.", "bad"); return; }
-      busy(true);
-      callApi("login", [u, p]).then(function (res) {
-        writeSession({ token: res.token, user: res.user, expiresAt: res.expiresAt });
-        busy(false);
-        closeModal();
-        renderAll();
-        loadSummary();
-        // Đến đây từ một app (link có ?next=/OEM/) thì quay lại đúng chỗ đó.
-        // Chỉ nhận đường dẫn nội bộ bắt đầu bằng một dấu "/" — không nhận
-        // "//host" hay URL tuyệt đối, tránh bị lợi dụng để chuyển ra ngoài.
-        var next = new URLSearchParams(location.search).get("next");
-        if (next && /^\/[^/]/.test(next)) location.href = next;
-      }).catch(function (err) {
-        busy(false);
-        setMsg(err.message, "bad");
-      });
-      return;
-    }
+  // ---------------------------------------------------------------
+  // Đăng nhập — ở cổng giữa trang
+  // ---------------------------------------------------------------
 
-    var s = readSession();
-    if (!s) { setMsg("Phiên đã hết hạn, đăng nhập lại.", "bad"); return; }
-    var oldP = el.oldPin.value.trim();
-    var n1 = el.newPin.value.trim();
-    var n2 = el.newPin2.value.trim();
-    if (!oldP || !n1) { setMsg("Nhập đủ PIN hiện tại và PIN mới.", "bad"); return; }
-    if (n1 !== n2) { setMsg("Hai lần nhập PIN mới không giống nhau.", "bad"); return; }
-    busy(true);
-    callApi("changePin", [s.token, oldP, n1]).then(function () {
-      busy(false);
-      setMsg("Đã đổi PIN. Lần sau đăng nhập bằng PIN mới.", "good");
-      setTimeout(closeModal, 1400);
+  function doLogin() {
+    var u = el.user.value.trim();
+    var p = el.pin.value.trim();
+    if (!u || !p) { setMsg("Nhập tên đăng nhập và PIN.", "bad"); return; }
+
+    el.submit.disabled = true;
+    el.submit.textContent = "Đang đăng nhập…";
+    setMsg("", "");
+
+    callApi("login", [u, p]).then(function (res) {
+      writeSession({ token: res.token, user: res.user, expiresAt: res.expiresAt });
+      el.submit.disabled = false;
+      el.submit.textContent = "Đăng nhập";
+      el.pin.value = "";
+      setMsg("", "");
+      renderAll();
+      loadSummary();
+      // Đến đây từ một app (link có ?next=/OEM/) thì quay lại đúng chỗ đó.
+      // Chỉ nhận đường dẫn nội bộ bắt đầu bằng một dấu "/" — không nhận
+      // "//host" hay URL tuyệt đối, tránh bị lợi dụng để chuyển ra ngoài.
+      var next = new URLSearchParams(location.search).get("next");
+      if (next && /^\/[^/]/.test(next)) location.href = next;
     }).catch(function (err) {
-      busy(false);
+      el.submit.disabled = false;
+      el.submit.textContent = "Đăng nhập";
       setMsg(err.message, "bad");
     });
   }
 
   // ---------------------------------------------------------------
-  // Khởi động
+  // Đổi PIN — trong hộp thoại
   // ---------------------------------------------------------------
+
+  function doChangePin() {
+    var s = readSession();
+    if (!s) { setPinMsg("Phiên đã hết hạn, đăng nhập lại.", "bad"); return; }
+    var oldP = el.oldPin.value.trim();
+    var n1 = el.newPin.value.trim();
+    var n2 = el.newPin2.value.trim();
+    if (!oldP || !n1) { setPinMsg("Nhập đủ PIN hiện tại và PIN mới.", "bad"); return; }
+    if (n1 !== n2) { setPinMsg("Hai lần nhập PIN mới không giống nhau.", "bad"); return; }
+
+    el.pinSubmit.disabled = true;
+    el.pinSubmit.textContent = "Đang xử lý…";
+    callApi("changePin", [s.token, oldP, n1]).then(function () {
+      el.pinSubmit.disabled = false;
+      el.pinSubmit.textContent = "Đổi PIN";
+      setPinMsg("Đã đổi PIN. Lần sau đăng nhập bằng PIN mới.", "good");
+      setTimeout(closeModal, 1400);
+    }).catch(function (err) {
+      el.pinSubmit.disabled = false;
+      el.pinSubmit.textContent = "Đổi PIN";
+      setPinMsg(err.message, "bad");
+    });
+  }
 
   function init() {
     el = {
       account: $("kidAccount"),
       appGrid: $("kidAppGrid"),
       appsMeta: $("kidAppsMeta"),
-      backdrop: $("kidBackdrop"),
-      title: $("kidTitle"),
-      sub: $("kidSub"),
-      loginFields: $("kidLoginFields"),
-      pinFields: $("kidPinFields"),
+      gate: $("kidGate"),
       user: $("kidUser"),
       pin: $("kidPin"),
+      msg: $("kidMsg"),
+      submit: $("kidSubmit"),
+      backdrop: $("kidBackdrop"),
       oldPin: $("kidOldPin"),
       newPin: $("kidNewPin"),
       newPin2: $("kidNewPin2"),
-      msg: $("kidMsg"),
-      submit: $("kidSubmit"),
+      pinMsg: $("kidPinMsg"),
+      pinSubmit: $("kidPinSubmit"),
       cancel: $("kidCancel")
     };
     if (!el.appGrid) return;
 
-    el.submit.addEventListener("click", submitModal);
+    el.submit.addEventListener("click", doLogin);
+    el.pinSubmit.addEventListener("click", doChangePin);
     el.cancel.addEventListener("click", closeModal);
     el.backdrop.addEventListener("click", function (e) {
       if (e.target === el.backdrop) closeModal();
     });
-    [el.user, el.pin, el.oldPin, el.newPin, el.newPin2].forEach(function (input) {
+    [el.user, el.pin].forEach(function (input) {
       input.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") submitModal();
+        if (e.key === "Enter") doLogin();
+      });
+    });
+    [el.oldPin, el.newPin, el.newPin2].forEach(function (input) {
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") doChangePin();
       });
     });
     document.addEventListener("keydown", function (e) {
