@@ -731,6 +731,11 @@
   .kid-gate-submit:disabled { opacity: .6; cursor: default; }
   .kid-gate-card .kid-msg { text-align: left; }
   .kid-gate-card .kid-note { text-align: left; margin-top: 12px; }
+  .kid-fallback {
+    border-top: 1px dashed var(--line);
+    padding-top: 10px;
+  }
+  .kid-fallback a { color: var(--accent-strong); font-weight: 600; }
 
   /* ---------- Thẻ ứng dụng ---------- */
   .kid-app {
@@ -814,7 +819,11 @@
 
         <p class="kid-msg" id="kidMsg"></p>
         <button class="btn kid-gate-submit" id="kidSubmit" type="button">Đăng nhập</button>
-        <p class="kid-note">Vẫn dùng đúng PIN bạn đang có ở bất kỳ app nào trong ba app — không cần đổi. Chưa đăng nhập ở đây thì vẫn mở được từng app và đăng nhập riêng như cũ.</p>
+        <p class="kid-note">Vẫn dùng đúng PIN bạn đang có ở bất kỳ app nào trong ba app — không cần đổi.</p>
+        <!-- Chỉ hiện cho người vừa bị một app đá về đây. Đây là lối ra khi
+             chính Karofi ID hỏng: không có nó thì một deployment lỗi khoá cả
+             ba app cùng lúc, không còn đường vòng nào. -->
+        <p class="kid-note kid-fallback" id="kidFallback" hidden></p>
       </div>
     </section>
 
@@ -1918,6 +1927,37 @@
     return b;
   }
 
+  /**
+   * Đường quay lại app đã đá người dùng về đây, hoặc null.
+   *
+   * Chỉ nhận đường dẫn nội bộ bắt đầu bằng đúng MỘT dấu "/" — không nhận
+   * "//host" hay URL tuyệt đối, tránh biến cổng thành bàn đạp chuyển người
+   * dùng ra trang ngoài.
+   */
+  function nextTarget() {
+    var next = new URLSearchParams(location.search).get("next");
+    return (next && /^\/[^/]/.test(next)) ? next : null;
+  }
+
+  /**
+   * Lối ra khi Karofi ID hỏng: mở thẳng app bằng form đăng nhập riêng của nó.
+   * Chỉ dựng khi có ?next=, tức là người này vừa bị một app đá về — người vào
+   * cổng theo cách bình thường không thấy gì, nên không ai đi đường vòng.
+   */
+  function renderFallback() {
+    if (!el.fallback) return;
+    var next = nextTarget();
+    if (!next) { el.fallback.hidden = true; return; }
+
+    el.fallback.hidden = false;
+    el.fallback.textContent = "Đăng nhập ở đây không được? ";
+    var a = document.createElement("a");
+    a.href = next + (next.indexOf("?") >= 0 ? "&" : "?") + "direct=1";
+    a.textContent = "Đăng nhập trực tiếp tại app";
+    el.fallback.appendChild(a);
+    el.fallback.appendChild(document.createTextNode("."));
+  }
+
   function focusGate() {
     if (!el.gate || !el.user) return;
     el.gate.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -2097,8 +2137,8 @@
       // Đến đây từ một app (link có ?next=/OEM/) thì quay lại đúng chỗ đó.
       // Chỉ nhận đường dẫn nội bộ bắt đầu bằng một dấu "/" — không nhận
       // "//host" hay URL tuyệt đối, tránh bị lợi dụng để chuyển ra ngoài.
-      var next = new URLSearchParams(location.search).get("next");
-      if (next && /^\/[^/]/.test(next)) location.href = next;
+      var next = nextTarget();
+      if (next) location.href = next;
     }).catch(function (err) {
       el.submit.disabled = false;
       el.submit.textContent = "Đăng nhập";
@@ -2143,6 +2183,7 @@
       pin: $("kidPin"),
       msg: $("kidMsg"),
       submit: $("kidSubmit"),
+      fallback: $("kidFallback"),
       backdrop: $("kidBackdrop"),
       oldPin: $("kidOldPin"),
       newPin: $("kidNewPin"),
@@ -2173,6 +2214,7 @@
       if (e.key === "Escape" && el.backdrop.classList.contains("open")) closeModal();
     });
 
+    renderFallback();
     renderAll();
     loadSummary();
   }
