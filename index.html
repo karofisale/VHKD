@@ -1703,13 +1703,69 @@
       <label for="kidNewPin2">Nhập lại PIN mới</label>
       <input id="kidNewPin2" type="password" inputmode="numeric" autocomplete="new-password" />
     </div>
-    <p class="kid-note">Ít nhất 4 chữ số, không phải dãy giống nhau hay liên tiếp.</p>
+    <p class="kid-note">Ít nhất 6 chữ số, không phải dãy giống nhau hay liên tiếp.</p>
 
     <p class="kid-msg" id="kidPinMsg"></p>
 
     <div class="modal-actions">
       <button class="btn btn-ghost" id="kidCancel" type="button">Đóng</button>
       <button class="btn btn-primary" id="kidPinSubmit" type="button">Đổi PIN</button>
+    </div>
+  </div>
+</div>
+<!-- Quản trị tài khoản. Chỉ hiện với người có cột is_admin trong Karofi ID —
+     nhưng đó chỉ là HIỂN THỊ: mọi thao tác đều được server kiểm lại quyền, nên
+     sửa cờ trong trình duyệt không cấp thêm gì. Xem gas/QuanTri.js. -->
+<style>
+  .kid-admin-modal { max-width: 860px; width: 96vw; }
+  .kid-admin-pin { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 10px; }
+  .kid-admin-pin .field { flex: 0 0 190px; margin: 0; }
+  .kid-admin-wrap { max-height: 46vh; overflow: auto; border: 1px solid #dfe3e8; border-radius: 8px; }
+  table.kid-users { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.kid-users th { position: sticky; top: 0; background: #2f3a45; color: #fff; text-align: left; padding: 7px 9px; font-weight: 600; }
+  table.kid-users td { padding: 6px 9px; border-top: 1px solid #eceff2; vertical-align: middle; }
+  table.kid-users tr.kid-off td { opacity: .55; }
+  .kid-tag { display: inline-block; padding: 1px 6px; border-radius: 999px; font-size: 11px; }
+  .kid-tag-lock { background: #fdecec; color: #a12626; }
+  .kid-tag-nopin { background: #fff4e0; color: #8a5a00; }
+  .kid-tag-admin { background: #e6f0ff; color: #1c4fa1; }
+  .kid-rowbtn { font-size: 11px; padding: 3px 8px; margin-right: 4px; border: 1px solid #cdd4db; background: #fff; border-radius: 6px; cursor: pointer; }
+  .kid-rowbtn:hover { background: #f2f5f8; }
+  .kid-pin-out { margin-top: 10px; padding: 10px 12px; border: 1px solid #b8d8b8; background: #f2fbf2; border-radius: 8px; }
+  .kid-pin-out b { font-size: 22px; letter-spacing: 3px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+</style>
+<div class="modal-backdrop" id="kidAdminBackdrop">
+  <div class="modal kid-admin-modal">
+    <h3>Quản trị tài khoản</h3>
+    <p class="sub">Đặt lại PIN, mở khoá, bật/tắt tài khoản. Không có chức năng xem PIN — PIN lưu dạng băm, không đọc ngược được.</p>
+
+    <div class="kid-admin-pin">
+      <div class="field">
+        <label for="kidAdminPin">PIN của bạn</label>
+        <input id="kidAdminPin" type="password" inputmode="numeric" autocomplete="current-password" />
+      </div>
+      <p class="kid-note" style="flex:1 1 320px;margin:0 0 6px">
+        Mọi thao tác ghi đều cần PIN này. Ô sẽ được xoá khi đóng cửa sổ.
+      </p>
+    </div>
+
+    <div class="kid-admin-wrap">
+      <table class="kid-users">
+        <thead>
+          <tr>
+            <th>Tài khoản</th><th>Họ tên</th><th>App</th><th>Trạng thái</th><th>Đăng nhập cuối</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="kidUsersBody"></tbody>
+      </table>
+    </div>
+
+    <div id="kidPinOut"></div>
+    <p class="kid-msg" id="kidAdminMsg"></p>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="kidAdminClose" type="button">Đóng</button>
+      <button class="btn btn-primary" id="kidAdminReload" type="button">Tải lại danh sách</button>
     </div>
   </div>
 </div>
@@ -1944,6 +2000,7 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     var actions = document.createElement("div");
     actions.className = "kid-account-actions";
     actions.appendChild(miniBtn("Đổi PIN", "PIN", openPinModal));
+    if (laQuanTri()) actions.appendChild(miniBtn("Quản trị", "QT", openAdminModal));
     actions.appendChild(miniBtn("Đăng xuất", "Thoát", function () {
       clearAllAppSessions();
       summary = null;
@@ -2138,6 +2195,203 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
   }
 
   // ---------------------------------------------------------------
+  // Quản trị tài khoản
+  //
+  // Cờ `quanTri` trong phiên chỉ quyết định có HIỆN nút hay không. Mọi thao
+  // tác dưới đây được server kiểm lại quyền từ cột is_admin của tab Users, nên
+  // người sửa cờ trong trình duyệt vẫn không làm được gì — xem gas/QuanTri.js.
+  //
+  // PIN của người quản trị nằm trong ô nhập của cửa sổ này và được gửi kèm
+  // TỪNG thao tác ghi. Không giữ nó ở biến toàn cục, không lưu localStorage:
+  // đóng cửa sổ là mất. Bắt gõ lại cho từng dòng thì đặt lại PIN cho năm người
+  // là gõ năm lần, nên ô này là mức thoả hiệp — vẫn là thứ kẻ chiếm được token
+  // không có.
+  // ---------------------------------------------------------------
+
+  function laQuanTri() {
+    var s = readSession();
+    return !!(s && s.user && s.user.quanTri);
+  }
+
+  function setAdminMsg(text, kind) {
+    var m = $("kidAdminMsg");
+    if (!m) return;
+    m.textContent = text || "";
+    m.className = "kid-msg" + (kind ? " kid-" + kind : "");
+  }
+
+  function adminPin() {
+    var v = ($("kidAdminPin") || {}).value || "";
+    return String(v).trim();
+  }
+
+  function openAdminModal() {
+    setAdminMsg("", "");
+    $("kidPinOut").innerHTML = "";
+    $("kidAdminBackdrop").classList.add("open");
+    taiDanhSachNguoiDung();
+    setTimeout(function () { $("kidAdminPin").focus(); }, 30);
+  }
+
+  function closeAdminModal() {
+    $("kidAdminBackdrop").classList.remove("open");
+    $("kidAdminPin").value = "";          // không giữ PIN sau khi đóng
+    $("kidUsersBody").innerHTML = "";
+    $("kidPinOut").innerHTML = "";
+    setAdminMsg("", "");
+  }
+
+  /**
+   * @param giuThongBao  true khi gọi ngay sau một thao tác ghi: giữ nguyên câu
+   *   "Đã đặt lại PIN cho X" thay vì thay bằng "N tài khoản". Không có cờ này
+   *   thì mỗi lần ghi xong, thông báo thành công bị lượt tải lại đè mất và
+   *   người dùng không biết việc vừa rồi có chạy hay không.
+   */
+  function taiDanhSachNguoiDung(giuThongBao) {
+    var s = readSession();
+    if (!s) { setAdminMsg("Phiên đã hết hạn, đăng nhập lại.", "bad"); return; }
+    if (!giuThongBao) setAdminMsg("Đang tải...", "");
+    callApi("adminListUsers", [s.token]).then(function (ds) {
+      veDanhSachNguoiDung(ds);
+      if (!giuThongBao) setAdminMsg(ds.length + " tài khoản.", "");
+    })["catch"](function (err) {
+      setAdminMsg(err.message, "bad");
+      $("kidUsersBody").innerHTML = "";
+    });
+  }
+
+  function nhanApp(u) {
+    var ra = [];
+    ["FC", "OEM", "EXPORT"].forEach(function (k) {
+      var c = u.app && u.app[k];
+      if (c) ra.push(k + (c.r ? ":" + c.r : ""));
+    });
+    return ra.join(" · ") || "—";
+  }
+
+  function veDanhSachNguoiDung(ds) {
+    var tb = $("kidUsersBody");
+    tb.innerHTML = "";
+    var toi = readSession();
+    var idToi = toi && toi.user ? String(toi.user.id) : "";
+
+    ds.forEach(function (u) {
+      var tr = document.createElement("tr");
+      if (!u.dangDung) tr.className = "kid-off";
+
+      var c1 = document.createElement("td");
+      c1.textContent = u.id;
+      if (u.quanTri) {
+        var tg = document.createElement("span");
+        tg.className = "kid-tag kid-tag-admin";
+        tg.textContent = "QT";
+        c1.appendChild(document.createTextNode(" "));
+        c1.appendChild(tg);
+      }
+
+      var c2 = document.createElement("td");
+      c2.textContent = u.hoTen || "";
+
+      var c3 = document.createElement("td");
+      c3.textContent = nhanApp(u);
+
+      var c4 = document.createElement("td");
+      if (!u.dangDung) c4.appendChild(theTag("Đã tắt", "lock"));
+      if (u.dangBiKhoa) c4.appendChild(theTag("Đang khoá (" + u.soLanSai + " lần sai)", "lock"));
+      if (!u.coPin) c4.appendChild(theTag("Chưa có PIN", "nopin"));
+      if (u.dangDung && !u.dangBiKhoa && u.coPin) c4.textContent = "Bình thường";
+
+      var c5 = document.createElement("td");
+      c5.textContent = u.dangNhapCuoi ? String(u.dangNhapCuoi).slice(0, 16).replace("T", " ") : "chưa bao giờ";
+
+      var c6 = document.createElement("td");
+      c6.appendChild(nutDong("Đặt lại PIN", function () { datLaiPin(u); }));
+      if (u.dangBiKhoa) c6.appendChild(nutDong("Mở khoá", function () { moKhoa(u); }));
+      // Không hiện nút tắt cho chính mình: server chặn, nhưng nút bấm được rồi
+      // mới báo lỗi là giao diện hứa một việc nó không làm.
+      if (String(u.id) !== idToi) {
+        c6.appendChild(nutDong(u.dangDung ? "Tắt" : "Bật", function () { batTat(u); }));
+      }
+
+      [c1, c2, c3, c4, c5, c6].forEach(function (c) { tr.appendChild(c); });
+      tb.appendChild(tr);
+    });
+  }
+
+  function theTag(chu, loai) {
+    var s = document.createElement("span");
+    s.className = "kid-tag kid-tag-" + loai;
+    s.textContent = chu;
+    return s;
+  }
+
+  function nutDong(chu, onClick) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "kid-rowbtn";
+    b.textContent = chu;
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  /** Chung cho ba thao tác ghi: kiểm PIN đã nhập, gọi, báo, tải lại danh sách. */
+  function thaoTacQuanTri(fn, args, xong) {
+    var s = readSession();
+    if (!s) { setAdminMsg("Phiên đã hết hạn, đăng nhập lại.", "bad"); return; }
+    if (!adminPin()) {
+      setAdminMsg("Nhập PIN của bạn ở ô trên trước đã.", "bad");
+      $("kidAdminPin").focus();
+      return;
+    }
+    setAdminMsg("Đang xử lý...", "");
+    callApi(fn, [s.token, adminPin()].concat(args)).then(function (r) {
+      xong(r);                        // đặt thông báo thành công
+      taiDanhSachNguoiDung(true);     // rồi vẽ lại bảng mà không đè lên nó
+    })["catch"](function (err) {
+      setAdminMsg(err.message, "bad");
+    });
+  }
+
+  function datLaiPin(u) {
+    if (!window.confirm("Đặt lại PIN cho " + u.id + " (" + (u.hoTen || "") + ")?\n\n"
+      + "PIN hiện tại của người này sẽ mất hiệu lực ngay.")) return;
+    thaoTacQuanTri("adminResetPin", [u.id, ""], function (r) {
+      // PIN mới chỉ tồn tại ở đây. Không ghi localStorage, không log ra console
+      // — console của trình duyệt là thứ được chụp màn hình và dán đi nơi khác.
+      var box = $("kidPinOut");
+      box.innerHTML = "";
+      var d = document.createElement("div");
+      d.className = "kid-pin-out";
+      var p1 = document.createElement("div");
+      p1.textContent = "PIN mới của " + r.id + (r.hoTen ? " (" + r.hoTen + ")" : "") + ":";
+      var p2 = document.createElement("b");
+      p2.textContent = r.pinMoi;
+      var p3 = document.createElement("div");
+      p3.style.marginTop = "6px";
+      p3.style.fontSize = "12px";
+      p3.textContent = r.canhBao;
+      d.appendChild(p1); d.appendChild(p2); d.appendChild(p3);
+      box.appendChild(d);
+      setAdminMsg("Đã đặt lại PIN cho " + r.id + ".", "good");
+    });
+  }
+
+  function moKhoa(u) {
+    thaoTacQuanTri("adminUnlock", [u.id], function () {
+      setAdminMsg("Đã mở khoá " + u.id + ".", "good");
+    });
+  }
+
+  function batTat(u) {
+    var bat = !u.dangDung;
+    if (!bat && !window.confirm("Tắt tài khoản " + u.id + "?\n\n"
+      + "Người này sẽ không đăng nhập được qua cổng nữa.")) return;
+    thaoTacQuanTri("adminSetActive", [u.id, bat], function (r) {
+      setAdminMsg((bat ? "Đã bật " : "Đã tắt ") + r.id + ". " + (r.nhac || ""), "good");
+    });
+  }
+
+  // ---------------------------------------------------------------
   // Modal
   // ---------------------------------------------------------------
 
@@ -2261,8 +2515,27 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
         if (e.key === "Enter") doChangePin();
       });
     });
+    // Cửa sổ quản trị. $() ngay tại chỗ chứ không đưa vào `el`: khối này chỉ
+    // tồn tại khi Karofi ID được bật, và gom vào el sẽ khiến trang đổ vỡ ở
+    // bản dựng nào chưa có markup đó.
+    var adminClose = $("kidAdminClose"), adminReload = $("kidAdminReload"),
+        adminBack = $("kidAdminBackdrop");
+    if (adminClose) adminClose.addEventListener("click", closeAdminModal);
+    // Bọc trong hàm vô danh: addEventListener truyền đối tượng sự kiện làm đối
+    // số đầu, mà đối tượng đó là truthy — gán trực tiếp là mọi lần bấm đều
+    // chạy ở chế độ "giữ thông báo" và người dùng không thấy phản hồi nào.
+    if (adminReload) adminReload.addEventListener("click", function () { taiDanhSachNguoiDung(); });
+    if (adminBack) {
+      adminBack.addEventListener("click", function (e) {
+        if (e.target === adminBack) closeAdminModal();
+      });
+    }
+
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && el.backdrop.classList.contains("open")) closeModal();
+      if (e.key !== "Escape") return;
+      // Cửa sổ quản trị nằm trên cùng nên nó đóng trước.
+      if (adminBack && adminBack.classList.contains("open")) { closeAdminModal(); return; }
+      if (el.backdrop.classList.contains("open")) closeModal();
     });
 
     renderFallback();
