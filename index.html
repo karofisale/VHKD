@@ -59,6 +59,12 @@
     --font-body: 'Plus Jakarta Sans', 'Segoe UI', Helvetica, Arial, sans-serif;
     --font-mono: 'JetBrains Mono', Consolas, 'SFMono-Regular', Menlo, monospace;
     --radius: 12px;
+
+    /* Số cột của lưới thẻ app + lưới thẻ tổng quan. JS đặt lại theo
+       KAROFI_APPS.length (xem init); 3 ở đây là bản dự phòng khi JS chưa
+       chạy. Hai lưới BẮT BUỘC dùng chung hai biến này để còn thẳng cột. */
+    --kid-so-app: 3;
+    --kid-luoi-gap: 12px;
   }
 
   /* Dải tối: cyan sáng lên (#35B9F5) như bên OEM, vì cyan gốc trên nền đen
@@ -501,11 +507,42 @@
   }
   .kid-apps-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
   .kid-apps-meta { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); }
-  .kid-app-grid {
+  /* ---------------------------------------------------------------
+     Lưới thẻ app và lưới thẻ tổng quan: SỐ CỘT CỐ ĐỊNH bằng số app của
+     hệ, không phải auto-fit.
+
+     auto-fit gộp các track rỗng lại, nên người chỉ được cấp một app thấy
+     một thẻ rộng bằng cả trang (đo được 1344px ở khổ 1400px) — thẻ to gấp
+     ba mà nội dung vẫn thế. Cột cố định thì thẻ luôn rộng đúng một phần
+     ba, dù người đó có một, hai hay ba app.
+
+     `--kid-so-app` do JS đặt từ KAROFI_APPS.length (xem init) nên thêm app
+     thứ tư không phải sửa CSS. Giá trị 3 ở đây chỉ là bản dự phòng khi JS
+     chưa chạy.
+     --------------------------------------------------------------- */
+  .kid-app-grid, .kid-sum-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(var(--kid-so-app), minmax(0, 1fr));
+    gap: var(--kid-luoi-gap);
   }
+  /* Chỉ hiện MỘT thẻ: một track rộng đúng bằng khi có đủ ba, đặt vào giữa.
+     Hai thẻ thì KHÔNG căn giữa — chúng ở cột 1 và 2 như thường, chỉ là
+     không giãn ra. */
+  .kid-app-grid.kid-luoi-1, .kid-sum-grid.kid-luoi-1 {
+    grid-template-columns: calc((100% - (var(--kid-so-app) - 1) * var(--kid-luoi-gap)) / var(--kid-so-app));
+    justify-content: center;
+  }
+  /* Dòng nhắc các app chưa được cấp quyền. Trước đây chúng là thẻ mờ nằm
+     trong lưới; như vậy thì người chỉ có một app có hai thẻ chết chiếm hai
+     phần ba dải, và thẻ dùng được của họ dạt sang mép. Gom thành một dòng
+     chữ thì vẫn nói đủ "app này có, bạn chưa được cấp" mà không chiếm chỗ. */
+  .kid-app-khoa {
+    font-size: 12px;
+    color: var(--ink-faint);
+    line-height: 1.5;
+  }
+  .kid-app-khoa b { font-weight: 600; color: var(--ink-soft); }
+  .kid-app-khoa:empty { display: none; }
   .kid-app {
     display: flex;
     flex-direction: column;
@@ -529,8 +566,8 @@
     text-transform: uppercase;
     color: var(--accent);
   }
-  .kid-app.kid-locked { opacity: .58; cursor: default; }
-  .kid-app.kid-locked .kid-app-foot { color: var(--ink-faint); }
+  /* Không còn thẻ mờ "Chưa có quyền": app chưa được cấp quyền gom thành
+     một dòng chữ .kid-app-khoa dưới lưới. */
 
   /* ===================================================================
      Số liệu tổng quan (2026-09)
@@ -560,11 +597,8 @@
      lưới trùng ba thông số đó thì cho đúng cùng một bộ cột — và vì hai lưới
      dựng theo cùng thứ tự KAROFI_APPS, mỗi thẻ tổng quan nằm dưới đúng thẻ
      app của nó. Đổi một bên mà quên bên kia là lệch ngay. */
-  .kid-sum-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
-    gap: 12px;
-  }
+  /* grid-template-columns / gap khai chung với .kid-app-grid ở trên — đó là
+     cách hai lưới thẳng cột với nhau. Đừng khai lại riêng ở đây. */
   .kid-sum-panel {
     min-width: 0;
     background: var(--bg-elevated);
@@ -705,8 +739,9 @@
      ai xem được danh mục kỹ năng, còn số của app thì người có quyền vào app
      đó đương nhiên được xem. */
   body.kid-limited .main { justify-content: center; }
-  body.kid-limited .kid-app-grid,
-  body.kid-limited .kid-sum-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+  /* Không còn override lưới cho chế độ rút gọn: số cột giờ theo số app của
+     hệ, và số THẺ theo quyền của từng người — hai việc đó đã lo xong việc
+     mà minmax(250px) từng lo. */
 
   /* ===================================================================
      Hai trang trong một, và cột trái là ngăn kéo (2026-09)
@@ -805,6 +840,20 @@
     /* Thanh trên cùng ở khổ này cao 56px, không phải 60px. */
     .rail { top: 56px; width: 84vw; max-width: 300px; }
     .kid-rail-nen { inset: 56px 0 0; }
+    /* Ba cột không vừa nữa: hạ về hai, và thẻ đơn lẻ rộng một nửa. */
+    .kid-app-grid, .kid-sum-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .kid-app-grid.kid-luoi-1, .kid-sum-grid.kid-luoi-1 {
+      grid-template-columns: calc((100% - var(--kid-luoi-gap)) / 2);
+    }
+  }
+  @media (max-width: 520px) {
+    /* Một cột: thẻ chiếm cả bề ngang là ĐÚNG ở khổ này, nên bỏ luôn cả phép
+       căn giữa — căn giữa một track rộng 100% chỉ thêm một lớp tính toán. */
+    .kid-app-grid, .kid-sum-grid,
+    .kid-app-grid.kid-luoi-1, .kid-sum-grid.kid-luoi-1 {
+      grid-template-columns: minmax(0, 1fr);
+      justify-content: stretch;
+    }
   }
 
   .kid-modal .field:last-of-type { margin-bottom: 4px; }
@@ -1086,6 +1135,8 @@
         <div class="kid-apps-meta" id="kidAppsMeta"></div>
       </div>
       <div class="kid-app-grid" id="kidAppGrid"></div>
+      <!-- Một dòng chữ, không phải thẻ: xem chú thích .kid-app-khoa. -->
+      <div class="kid-app-khoa" id="kidAppKhoa"></div>
     </section>
 
     <!-- Số liệu tổng quan. Ba tấm do JS dựng, mỗi tấm gọi backend của app đó
@@ -2426,22 +2477,45 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     setTimeout(function () { el.user.focus(); }, 240);
   }
 
+  /**
+   * Những app người này MỞ ĐƯỢC, theo đúng thứ tự KAROFI_APPS.
+   *
+   * Chưa đăng nhập thì tính là mở được TẤT CẢ — mỗi app còn màn hình đăng nhập
+   * riêng của nó, và chặn đường đi từ cổng sang app là bước lùi so với trước
+   * khi có cổng.
+   *
+   * Dùng chung cho cả lưới thẻ app và lưới thẻ tổng quan: hai lưới phải có
+   * cùng số phần tử theo cùng thứ tự, nếu không thì thẻ số liệu không nằm dưới
+   * đúng thẻ app của nó.
+   */
+  function appMoDuoc() {
+    var s = readSession();
+    if (!s) return KAROFI_APPS.slice();
+    var co = s.user.apps || [];
+    return KAROFI_APPS.filter(function (app) { return co.indexOf(app.key) >= 0; });
+  }
+
+  /**
+   * Đặt lớp báo "lưới này chỉ có một thẻ" để CSS căn giữa nó.
+   *
+   * Chỉ MỘT thẻ mới căn giữa. Hai thẻ thì để nguyên ở cột 1 và 2 — chúng vẫn
+   * rộng đúng một phần ba như khi có ba, chỉ là không giãn ra.
+   */
+  function datLopLuoi(grid, soThe) {
+    if (grid) grid.classList.toggle("kid-luoi-1", soThe === 1);
+  }
+
   function renderApps() {
     var grid = el.appGrid;
     if (!grid) return;
     var s = readSession();
     grid.innerHTML = "";
 
-    KAROFI_APPS.forEach(function (app) {
-      // Chưa đăng nhập thì thẻ VẪN là link mở được — mỗi app còn màn hình đăng
-      // nhập riêng của nó, và chặn đường đi từ dashboard sang app là bước lùi
-      // so với trước khi có cổng. Chỉ khoá khi đã đăng nhập mà không có quyền:
-      // lúc đó "không mở được" là câu trả lời thật, không phải rào cản thừa.
-      var hasClaim = s && (s.user.apps || []).indexOf(app.key) >= 0;
-      var locked = !!s && !hasClaim;
-      var node = document.createElement(locked ? "div" : "a");
-      node.className = "kid-app" + (locked ? " kid-locked" : "");
-      if (!locked) node.href = app.href;
+    var moDuoc = appMoDuoc();
+    moDuoc.forEach(function (app) {
+      var node = document.createElement("a");
+      node.className = "kid-app";
+      node.href = app.href;
 
       var name = document.createElement("div");
       name.className = "kid-app-name";
@@ -2459,11 +2533,36 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
       // hiện số là mời hai con số cùng nghĩa trôi lệch nhau.
       var foot = document.createElement("div");
       foot.className = "kid-app-foot";
-      foot.textContent = locked ? "Chưa có quyền" : "Mở app →";
+      foot.textContent = "Mở app →";
       node.appendChild(foot);
 
       grid.appendChild(node);
     });
+    datLopLuoi(grid, moDuoc.length);
+
+    // App chưa được cấp quyền gom thành MỘT DÒNG CHỮ, không còn là thẻ mờ nằm
+    // trong lưới. Trước đây người chỉ có một app phải nhìn hai thẻ chết chiếm
+    // hai phần ba dải, còn thẻ dùng được của họ thì dạt sang mép phải.
+    //
+    // Vẫn phải nói ra chứ không xoá hẳn: người đáng lẽ được cấp một app mà
+    // chưa được cấp thì cần biết app đó có tồn tại để đi xin quyền. Bỏ hẳn là
+    // biến "chưa được cấp" thành "không có app này".
+    if (el.appKhoa) {
+      el.appKhoa.innerHTML = "";
+      var thieu = s ? KAROFI_APPS.filter(function (app) {
+        return moDuoc.indexOf(app) < 0;
+      }) : [];
+      if (thieu.length) {
+        el.appKhoa.appendChild(document.createTextNode("Chưa được cấp quyền: "));
+        var b = document.createElement("b");
+        b.textContent = thieu.map(function (a) { return a.ten; }).join(" · ");
+        el.appKhoa.appendChild(b);
+        el.appKhoa.appendChild(document.createTextNode(
+          thieu.length === KAROFI_APPS.length
+            ? " — nhờ người quản trị cấp quyền để bắt đầu."
+            : "."));
+      }
+    }
   }
 
   function renderMeta() {
@@ -2910,8 +3009,11 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     if (!grid) return;
     grid.innerHTML = "";
 
+    // Thứ tự KAROFI_APPS, đúng thứ tự mà renderApps dựng thẻ app — đó là điều
+    // giữ cho thẻ số liệu nằm dưới đúng thẻ app của nó.
     var keys = KAROFI_APPS.map(function (a) { return a.key; })
       .filter(function (k) { return soLieu[k]; });
+    datLopLuoi(grid, keys.length);
 
     if (!keys.length) {
       // Chỉ còn một lý do vào được nhánh này: đã đăng nhập mà chưa được cấp
@@ -3258,6 +3360,7 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
       account: $("kidAccount"),
       appGrid: $("kidAppGrid"),
       appsMeta: $("kidAppsMeta"),
+      appKhoa: $("kidAppKhoa"),
       sumGrid: $("kidSumGrid"),
       sumWhen: $("kidSumWhen"),
       sumReload: $("kidSumReload"),
@@ -3276,6 +3379,10 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
       cancel: $("kidCancel")
     };
     if (!el.appGrid) return;
+
+    // Số cột của hai lưới = số app của hệ. Đặt từ đây để thêm app thứ tư chỉ
+    // phải sửa karofi-apps.js, không phải sửa CSS.
+    document.documentElement.style.setProperty("--kid-so-app", String(KAROFI_APPS.length));
 
     el.submit.addEventListener("click", doLogin);
     if (el.sumReload) el.sumReload.addEventListener("click", taiSoLieu);

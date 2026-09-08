@@ -89,13 +89,38 @@ có lúc mất 10-30 giây, và chờ cả ba là để cả khối trống su�
 Cổng **không** có luật phân quyền nào của riêng nó: mỗi backend tự ép phạm vi
 theo token. Lọc theo `s.user.apps` chỉ để không gọi vô ích.
 
-**Thẻ tổng quan thẳng cột với thẻ app.** `.kid-sum-grid` và `.kid-app-grid`
-dùng CÙNG `minmax`, CÙNG `gap`, và hai section có CÙNG đệm ngang (28px, 16px ở
-khổ nhỏ). `auto-fit` tính số cột chỉ từ bề rộng khung và gap, nên trùng ba
-thông số đó là ra đúng cùng một bộ cột; và vì hai lưới dựng theo cùng thứ tự
-`KAROFI_APPS`, mỗi thẻ số liệu nằm dưới đúng thẻ app của nó. Đổi một bên mà
-quên bên kia là lệch ngay — đo bằng `getBoundingClientRect()` của `.kid-app` và
-`.kid-sum-panel`, hai mảng phải giống nhau từng số.
+**Số cột CỐ ĐỊNH bằng số app của hệ, không `auto-fit`.** `auto-fit` gộp các
+track rỗng lại, nên người chỉ được cấp một app thấy một thẻ rộng bằng cả trang
+(đo được 1344px ở khổ 1400px). Cột cố định thì thẻ luôn rộng đúng một phần ba,
+dù người đó có một, hai hay ba app.
+
+`--kid-so-app` và `--kid-luoi-gap` là **một nguồn cho cả hai lưới** —
+`init()` đặt `--kid-so-app` từ `KAROFI_APPS.length` nên thêm app thứ tư không
+phải sửa CSS. Hai lưới bắt buộc dùng chung hai biến đó (khai một lần ở
+`.kid-app-grid, .kid-sum-grid`), và hai section phải cùng đệm ngang.
+
+Số **THẺ** thì theo quyền của từng người (`appMoDuoc()`):
+
+| Số app | Bố cục |
+|---|---|
+| 1 | một track rộng 1/3, `justify-content: center` (lớp `.kid-luoi-1`) |
+| 2 | cột 1 và 2, không di chuyển, vẫn rộng 1/3 |
+| 3 | kín hàng |
+| 0 | không thẻ nào, chỉ còn dòng nhắc đi xin quyền |
+
+Ở ≤780px hạ về 2 cột (thẻ đơn lẻ rộng 1/2), ở ≤520px về 1 cột và **bỏ luôn
+phép căn giữa** — căn giữa một track rộng 100% chỉ thêm một lớp tính toán.
+
+App **chưa được cấp quyền** gom thành một dòng chữ `.kid-app-khoa` dưới lưới,
+không còn là thẻ mờ trong lưới. Vẫn phải nói ra chứ không xoá hẳn: người đáng
+lẽ được cấp một app mà chưa được cấp thì cần biết app đó tồn tại để đi xin
+quyền. **Chưa đăng nhập thì vẫn hiện đủ ba thẻ và vẫn bấm được** — mỗi app còn
+màn hình đăng nhập riêng, chặn đường đó là bước lùi.
+
+Cách kiểm: `getBoundingClientRect()` của `.kid-app` và `.kid-sum-panel`, hai
+mảng phải giống nhau từng số. `test/portal-stub.py` bên Karofi ID có sẵn bốn
+tài khoản cho bốn trường hợp: `hai.cao` (3 app), `hai.app` (2), `ashley` (1),
+`khong.app` (0).
 
 Bảng kênh × tháng của tấm Sale Forecast có vùng cuộn ngang RIÊNG
 (`.kid-sum-scroll`) và tấm phải có `min-width: 0`. Thiếu một trong hai thì bảng
