@@ -43,6 +43,31 @@ việc thu hồi không có tác dụng gì.
 Cố ý **không** xoá `exportops_theme` và `exportops_showLineImg`: đó là tuỳ chọn
 hiển thị của máy, không phải danh tính.
 
+## Hai trang trong một
+
+Mặc định mở cổng là **trang tổng quan** (thẻ app + số liệu). Cột danh mục là
+**ngăn kéo** — nút ba gạch ở thanh trên cùng mới mở. Chọn một nhóm công việc
+trong ngăn kéo thì trang chuyển sang **danh mục** và nó THAY THẾ trang tổng
+quan; quay lại bằng mục "Tổng quan" ở đầu ngăn kéo.
+
+`window.KID_VIEW` (`"tongquan"` | `"danhmuc"`) là cầu nối giữa hai IIFE — khối
+dashboard và khối Karofi ID không dùng chung phạm vi. Trạng thái **không** lưu
+localStorage: mở cổng ra là để xem số, nên mặc định phải luôn là trang tổng
+quan chứ không phải nhóm công việc lần trước.
+
+Ngăn kéo dùng `position: fixed` + `translateX`, KHÔNG dùng `display: none`: nó
+trượt ra đè lên nội dung nên mở/đóng không đẩy lệch bố cục bên phải — nếu đẩy
+thì lưới số liệu tính lại số cột mỗi lần bấm nút.
+
+`veTrangDanhMuc()` tự chặn khi `body.kid-limited`: người rút gọn quyền không có
+nút mở ngăn kéo, nhưng CSS chỉ ẩn hiển thị nên cần một lớp chặn ở JS.
+
+**Media query khổ nhỏ phải nằm SAU quy tắc gốc mà nó ghi đè.** Bản cũ đặt
+`.kid-apps { padding: 18px 16px 20px }` trong media query ở ĐẦU file, còn quy
+tắc gốc `padding: 20px 28px 22px` viết sau đó — cùng độ ưu tiên, quy tắc sau
+thắng, nên đệm khổ nhỏ chưa bao giờ có tác dụng. Lỗi chỉ lộ ra khi khối số liệu
+ra đời và hai lưới lệch nhau 12px.
+
 ## Số liệu tổng quan
 
 Khối `.kid-sum` gọi **thẳng backend của từng app**, không qua Karofi ID:
@@ -64,10 +89,23 @@ có lúc mất 10-30 giây, và chờ cả ba là để cả khối trống su�
 Cổng **không** có luật phân quyền nào của riêng nó: mỗi backend tự ép phạm vi
 theo token. Lọc theo `s.user.apps` chỉ để không gọi vô ích.
 
+**Thẻ tổng quan thẳng cột với thẻ app.** `.kid-sum-grid` và `.kid-app-grid`
+dùng CÙNG `minmax`, CÙNG `gap`, và hai section có CÙNG đệm ngang (28px, 16px ở
+khổ nhỏ). `auto-fit` tính số cột chỉ từ bề rộng khung và gap, nên trùng ba
+thông số đó là ra đúng cùng một bộ cột; và vì hai lưới dựng theo cùng thứ tự
+`KAROFI_APPS`, mỗi thẻ số liệu nằm dưới đúng thẻ app của nó. Đổi một bên mà
+quên bên kia là lệch ngay — đo bằng `getBoundingClientRect()` của `.kid-app` và
+`.kid-sum-panel`, hai mảng phải giống nhau từng số.
+
 Bảng kênh × tháng của tấm Sale Forecast có vùng cuộn ngang RIÊNG
 (`.kid-sum-scroll`) và tấm phải có `min-width: 0`. Thiếu một trong hai thì bảng
 đó đẩy rộng cả trang và kéo lệch cả thanh trên cùng — mặc định của grid item là
 `min-content`.
+
+`TEN_TAT_KENH` chỉ để ĐỔI CÁCH VIẾT mã kênh (`XK` -> `Export`), không để lọc:
+mã lạ vẫn hiện nguyên mã. Mã kênh của FC vốn đã là dạng viết tắt (OEM, GT2, 3T,
+NSKX) nên dùng thẳng mã; `name` bên đó là tên đầy đủ và làm cột đầu rộng gấp
+đôi phần số.
 
 Thử trên máy: `test/portal-stub.py` bên Karofi ID giả lập cả ba backend (đặt
 `EXPORT_LOI = True` để xem nhánh một tấm hỏng).

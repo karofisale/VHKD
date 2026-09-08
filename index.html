@@ -442,16 +442,11 @@
   }
 
   @media (max-width: 780px) {
-    .app { flex-direction: column; min-height: calc(100vh - 56px); }
-    .rail { flex: none; width: 100%; border-right: none; border-bottom: 1px solid var(--line); flex-direction: row; align-items: center; overflow-x: auto; padding: 10px 14px; }
-    /* Tên tổ chức và tiêu đề đã nằm trên thanh trên cùng, không lặp lại ở đây. */
-    .rail-head { display: none; }
-    .rail-nav { flex-direction: row; }
-    .rail-btn { white-space: nowrap; }
-    .rail-foot { margin-top: 0; margin-left: 8px; border-top: none; padding-top: 0; flex: none; }
-    .rail-note { display: none; }
+    .app { min-height: calc(100vh - 56px); }
     .topbar, .tabs, .content { padding-left: 16px; padding-right: 16px; }
-    .kid-apps { padding: 18px 16px 20px; }
+    /* Đệm khổ nhỏ của .kid-apps / .kid-sum và mốc trên của ngăn kéo KHÔNG nằm
+       ở đây: quy tắc gốc của chúng viết SAU khối này trong file, mà cùng độ
+       ưu tiên thì quy tắc sau thắng. Xem media query cuối phần Karofi ID. */
   }
 
   /* ===================================================================
@@ -550,6 +545,8 @@
      =================================================================== */
   .kid-sum {
     border-bottom: 1px solid var(--line);
+    /* Đệm NGANG phải bằng .kid-apps (28px). Lệch một pixel là thẻ tổng quan
+       không còn thẳng cột với thẻ app của nó. */
     padding: 18px 28px 22px;
     display: flex;
     flex-direction: column;
@@ -558,9 +555,14 @@
   .kid-sum-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .kid-sum-head-right { display: flex; align-items: baseline; gap: 10px; }
   .kid-sum-when { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); }
+  /* THẲNG CỘT VỚI THẺ APP: cùng minmax, cùng gap, cùng đệm ngang như
+     .kid-app-grid. auto-fit tính số cột chỉ từ bề rộng khung và gap, nên hai
+     lưới trùng ba thông số đó thì cho đúng cùng một bộ cột — và vì hai lưới
+     dựng theo cùng thứ tự KAROFI_APPS, mỗi thẻ tổng quan nằm dưới đúng thẻ
+     app của nó. Đổi một bên mà quên bên kia là lệch ngay. */
   .kid-sum-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
     gap: 12px;
   }
   .kid-sum-panel {
@@ -573,7 +575,6 @@
     flex-direction: column;
     gap: 10px;
   }
-  .kid-sum-panel.kid-sum-wide { grid-column: 1 / -1; }
   .kid-sum-title { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
   .kid-sum-title b { font-family: var(--font-display); font-size: 14.5px; font-weight: 600; }
   .kid-sum-scope {
@@ -592,22 +593,27 @@
   /* Hàng nhãn — số. Nhãn co được, số thì không: `flex: 1 1 auto` + min-width 0
      ở nhãn giữ cho số dài không bị cắt hay đẩy tràn ra ngoài tấm. */
   .kid-sum-rows { display: flex; flex-direction: column; gap: 1px; }
+  /* flex-wrap: thẻ giờ chỉ rộng bằng một cột thẻ app, nên nhãn dài + số dài
+     có lúc không đủ chỗ trên một dòng. Cho phép xuống dòng và giữ số ở lề
+     phải bằng margin-left:auto — tốt hơn hẳn so với cắt bớt nhãn. */
   .kid-sum-row {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 2px 10px;
     padding: 5px 0;
     border-bottom: 1px solid var(--line-soft);
   }
   .kid-sum-row:last-child { border-bottom: none; }
-  .kid-sum-row.kid-sum-sub { padding-left: 12px; }
+  .kid-sum-row.kid-sum-sub { padding-left: 10px; }
   .kid-sum-row.kid-sum-strong { border-top: 1px solid var(--line); margin-top: 3px; }
   .kid-sum-k { flex: 1 1 auto; min-width: 0; font-size: 12.5px; color: var(--ink-soft); }
   .kid-sum-row.kid-sum-sub .kid-sum-k { font-size: 12px; color: var(--ink-faint); }
   .kid-sum-row.kid-sum-strong .kid-sum-k { font-weight: 600; color: var(--ink); }
   .kid-sum-v {
     flex: 0 0 auto;
+    margin-left: auto;
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
     font-size: 13px;
@@ -655,7 +661,6 @@
   }
   table.kid-sum-tbl tr.kid-sum-tong td { border-top: 1px solid var(--line); border-bottom: none; font-weight: 700; color: var(--ink); }
   table.kid-sum-tbl tr.kid-sum-tong td:first-child { font-weight: 600; color: var(--ink); }
-  table.kid-sum-tbl col.kid-sum-cot-tong { background: var(--bg-sunken); }
 
   .kid-sum-plans { display: flex; flex-direction: column; gap: 4px; }
   .kid-sum-plan {
@@ -674,19 +679,17 @@
 
   /* Chưa đăng nhập thì không có token, không có gì để hiện. */
   body.kid-anon .kid-sum { display: none; }
-  @media (max-width: 780px) {
-    .kid-sum { padding: 16px 18px 18px; }
-  }
 
   /* Chế độ rút gọn: chỉ hiện phần đăng nhập và dải thẻ ứng dụng.
      Đây là ẩn HIỂN THỊ, không phải chặn truy cập — trang này là trang tĩnh
      công khai, toàn bộ danh mục nằm sẵn trong HTML. Ai xem mã nguồn vẫn đọc
      được. Muốn giấu thật thì phải đưa danh mục ra sau API. */
+  /* .topbar/.tabs/.content không cần liệt kê ở đây nữa: từ 2026-09 chúng ẩn
+     MẶC ĐỊNH cho mọi người và chỉ hiện ở trang danh mục (xem khối "Hai trang
+     trong một"). Người rút gọn không có nút mở ngăn kéo nên không vào được
+     trang đó — và veTrangDanhMuc() cũng chặn lại một lần nữa ở JS. */
   body.kid-limited .rail-nav,
-  body.kid-limited .rail-foot,
-  body.kid-limited .main > .topbar,
-  body.kid-limited .main > .tabs,
-  body.kid-limited .main > .content { display: none; }
+  body.kid-limited .rail-foot { display: none; }
   /* Bỏ dải nền nổi khi rút gọn: nếu giữ, trang thành một thanh nổi ở trên và
      một khoảng trống lớn bên dưới, trông như tải hỏng. Bỏ đi thì nó đọc như
      một trang mở ứng dụng. */
@@ -702,7 +705,107 @@
      ai xem được danh mục kỹ năng, còn số của app thì người có quyền vào app
      đó đương nhiên được xem. */
   body.kid-limited .main { justify-content: center; }
-  body.kid-limited .kid-app-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+  body.kid-limited .kid-app-grid,
+  body.kid-limited .kid-sum-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+
+  /* ===================================================================
+     Hai trang trong một, và cột trái là ngăn kéo (2026-09)
+
+     Trước đây cả ba thứ cùng hiện một lúc: cột danh mục, dải thẻ app + số
+     liệu, và bảng Nhóm công việc. Mở trang ra là ba tầng nội dung không liên
+     quan nhau, và phần hay dùng nhất (số liệu) bị đẩy xuống dưới màn hình
+     đầu tiên.
+
+     Nay: mặc định chỉ có TRANG TỔNG QUAN. Cột danh mục là ngăn kéo, bấm nút
+     ba gạch mới ra; chọn một nhóm công việc thì trang chuyển sang DANH MỤC và
+     thay thế trang tổng quan. Quay lại bằng mục "Tổng quan" ở đầu ngăn kéo.
+
+     Ngăn kéo dùng position:fixed + translateX chứ không phải display:none:
+     nó trượt ra đè lên nội dung, nên mở/đóng KHÔNG đẩy lệch bố cục bên phải —
+     nếu đẩy thì bảng số liệu tính lại số cột mỗi lần bấm nút.
+     =================================================================== */
+  .kid-burger {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .kid-burger:hover { border-color: var(--ink-faint); }
+  .kid-burger span {
+    display: block;
+    width: 15px;
+    height: 1.5px;
+    border-radius: 2px;
+    background: var(--ink-soft);
+  }
+  body.kid-rail-mo .kid-burger { border-color: var(--accent); background: var(--accent-soft); }
+  body.kid-rail-mo .kid-burger span { background: var(--accent-strong); }
+
+  .rail {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    bottom: 0;
+    z-index: 45;
+    width: 252px;
+    flex: none;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform .18s ease;
+    box-shadow: var(--shadow-lift);
+  }
+  body.kid-rail-mo .rail { transform: none; }
+  .kid-rail-nen {
+    position: fixed;
+    inset: 60px 0 0;
+    z-index: 44;
+    background: rgba(15,23,42,0.34);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease;
+  }
+  body.kid-rail-mo .kid-rail-nen { opacity: 1; pointer-events: auto; }
+  /* Người dùng bàn phím phải ra được khỏi ngăn kéo đang đóng. */
+  .rail[aria-hidden="true"] { visibility: hidden; }
+  body.kid-rail-mo .rail { visibility: visible; }
+
+  /* Hai trang loại trừ nhau. Mặc định (không có lớp nào) là trang tổng quan. */
+  .main > .topbar,
+  .main > .tabs,
+  .main > .content { display: none; }
+  body.kid-view-danhmuc .main > .topbar,
+  body.kid-view-danhmuc .main > .tabs { display: block; }
+  body.kid-view-danhmuc .main > .tabs { display: flex; }
+  body.kid-view-danhmuc .main > .content { display: block; }
+  body.kid-view-danhmuc .kid-apps,
+  body.kid-view-danhmuc .kid-sum { display: none; }
+  /* Rút gọn quyền thì không có trang danh mục để mở, nên cũng không có nút. */
+  body.kid-limited .kid-burger { display: none; }
+
+  /* ===================================================================
+     Khổ nhỏ — media query này phải nằm SAU mọi quy tắc gốc mà nó ghi đè.
+     Bản cũ đặt `.kid-apps { padding: 18px 16px 20px }` trong media query ở
+     đầu file, nhưng quy tắc gốc `.kid-apps { padding: 20px 28px 22px }` viết
+     sau đó — cùng độ ưu tiên, quy tắc sau thắng, nên đệm khổ nhỏ CHƯA BAO GIỜ
+     có tác dụng. Chỉ lộ ra khi khối số liệu ra đời: hai lưới lệch 12px và
+     thẻ tổng quan không còn thẳng cột với thẻ app.
+     =================================================================== */
+  @media (max-width: 780px) {
+    .kid-apps { padding: 18px 16px 20px; }
+    .kid-sum { padding: 16px 16px 18px; }
+    /* Thanh trên cùng ở khổ này cao 56px, không phải 60px. */
+    .rail { top: 56px; width: 84vw; max-width: 300px; }
+    .kid-rail-nen { inset: 56px 0 0; }
+  }
 
   .kid-modal .field:last-of-type { margin-bottom: 4px; }
   .kid-msg { font-size: 12.5px; line-height: 1.5; margin: 8px 0 0; min-height: 1em; }
@@ -915,6 +1018,12 @@
      mọi khổ màn hình — trước đây tài khoản nằm trong cột trái nên trên điện
      thoại bị ẩn theo cả cột, không còn đường nào để đăng nhập. -->
 <header class="kid-topbar">
+  <!-- Nút mở ngăn kéo danh mục. Đứng trước nhận diện thương hiệu vì đó là chỗ
+       người dùng tìm nút menu theo thói quen. -->
+  <button class="kid-burger" id="kidBurger" type="button"
+          aria-label="Danh mục kỹ năng & công cụ" aria-expanded="false" aria-controls="railNav">
+    <span></span><span></span><span></span>
+  </button>
   <a class="kid-brand" href="./" aria-label="Karofi Portal">
     <span class="kid-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2C7.9 7 5.4 10.4 5.4 13.4a6.6 6.6 0 1 0 13.2 0c0-3-2.5-6.4-6.6-11.2Z" fill="#FFFFFF"/></svg></span>
     <span class="kid-brand-text">
@@ -925,8 +1034,12 @@
   <div class="kid-account" id="kidAccount"></div>
 </header>
 
+<!-- Lớp phủ của ngăn kéo. Nằm NGOÀI .app để không bị bố cục flex của .app
+     ảnh hưởng, và bấm vào là đóng ngăn kéo. -->
+<div class="kid-rail-nen" id="kidRailNen"></div>
+
 <div class="app">
-  <aside class="rail">
+  <aside class="rail" id="kidRail" aria-hidden="true">
     <!-- Thanh trên cùng đã nói tên sản phẩm rồi. Nhắc lại ở đây thành ba
          cách gọi cùng một thứ trên cùng một màn hình, nên cột trái chỉ giữ
          một dòng nói nó là danh mục gì. -->
@@ -1505,6 +1618,54 @@
     return "file://" + encodeURI(norm);
   }
 
+  // ---------------------------------------------------------------
+  // Hai trang, một ngăn kéo
+  //
+  // Mặc định mở trang là TỔNG QUAN (thẻ app + số liệu). Bảng Nhóm công việc
+  // chỉ hiện khi chọn một nhóm trong ngăn kéo, và khi đó nó THAY THẾ trang
+  // tổng quan chứ không nối thêm xuống dưới.
+  //
+  // Trạng thái không lưu vào localStorage: mở cổng ra là để xem số, nên mặc
+  // định phải luôn là trang tổng quan chứ không phải nhóm công việc lần trước.
+  //
+  // window.KID_VIEW để khối Karofi ID (IIFE thứ hai) đọc được — hai khối
+  // không dùng chung phạm vi. Chỉ hai giá trị: "tongquan" | "danhmuc".
+  // ---------------------------------------------------------------
+
+  window.KID_VIEW = "tongquan";
+
+  function datNganKeo(mo) {
+    document.body.classList.toggle("kid-rail-mo", !!mo);
+    var burger = document.getElementById("kidBurger");
+    var rail = document.getElementById("kidRail");
+    if (burger) burger.setAttribute("aria-expanded", mo ? "true" : "false");
+    // aria-hidden theo trạng thái thật: ngăn kéo đóng vẫn nằm trong DOM, và
+    // nếu không đánh dấu thì trình đọc màn hình vẫn đọc hết danh mục đang ẩn.
+    if (rail) rail.setAttribute("aria-hidden", mo ? "false" : "true");
+  }
+
+  function veTrangTongQuan() {
+    window.KID_VIEW = "tongquan";
+    document.body.classList.remove("kid-view-danhmuc");
+    datNganKeo(false);
+    render();
+  }
+
+  function veTrangDanhMuc() {
+    // Chặn lần thứ hai ở JS: người rút gọn quyền không có nút mở ngăn kéo, mà
+    // CSS thì chỉ ẩn hiển thị. Không có dòng này thì ai gọi hàm từ console là
+    // mở được bảng danh mục.
+    if (document.body.classList.contains("kid-limited")) return;
+    window.KID_VIEW = "danhmuc";
+    document.body.classList.add("kid-view-danhmuc");
+    datNganKeo(false);
+  }
+
+  // Khối Karofi ID gọi khi đăng xuất / khi phiên bị thu hồi: nếu để nguyên ở
+  // trang danh mục thì người vừa đăng xuất thấy một trang danh mục và một
+  // cổng đăng nhập chen giữa, không thấy dải thẻ app.
+  window.KID_VE_TONG_QUAN = veTrangTongQuan;
+
   function render() {
     var groups = mergedGroups();
     if (!groups.length) return;
@@ -1521,13 +1682,30 @@
     // rail nav
     var nav = document.getElementById("railNav");
     nav.innerHTML = "";
+
+    // Đường VỀ trang tổng quan. Phải có: khi đã sang trang danh mục thì dải
+    // thẻ app và số liệu bị thay thế, và nếu không có mục này thì cách duy
+    // nhất quay lại là tải lại trang.
+    var btnTq = document.createElement("button");
+    btnTq.type = "button";
+    btnTq.className = "rail-btn" + (window.KID_VIEW !== "danhmuc" ? " active" : "");
+    btnTq.innerHTML = "<span>Tổng quan</span>";
+    btnTq.addEventListener("click", function () { veTrangTongQuan(); });
+    nav.appendChild(btnTq);
+
     groups.forEach(function (g) {
       var btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "rail-btn" + (g.id === state.groupId ? " active" : "");
+      btn.className = "rail-btn"
+        + (window.KID_VIEW === "danhmuc" && g.id === state.groupId ? " active" : "");
       var count = g.tasks.reduce(function (n, t) { return n + t.items.length; }, 0);
       btn.innerHTML = "<span>" + escapeHtml(g.name) + "</span><span class=\"count\">" + count + "</span>";
-      btn.addEventListener("click", function () { state.groupId = g.id; state.taskId = null; render(); });
+      btn.addEventListener("click", function () {
+        state.groupId = g.id;
+        state.taskId = null;
+        veTrangDanhMuc();
+        render();
+      });
       nav.appendChild(btn);
     });
 
@@ -1832,10 +2010,27 @@
     modalBackdrop.classList.remove("open");
     state.groupId = groupId;
     state.taskId = entry.taskId;
+    // Vừa thêm một mục thì phải sang trang danh mục mới thấy nó, nếu không
+    // câu "Đã thêm" hiện lên mà trang không đổi gì.
+    veTrangDanhMuc();
     render();
     showToast("Đã thêm — chỉ hiển thị trên trình duyệt này.");
   });
 
+  // --- ngăn kéo danh mục ---
+  var burger = document.getElementById("kidBurger");
+  if (burger) {
+    burger.addEventListener("click", function () {
+      datNganKeo(!document.body.classList.contains("kid-rail-mo"));
+    });
+  }
+  var railNen = document.getElementById("kidRailNen");
+  if (railNen) railNen.addEventListener("click", function () { datNganKeo(false); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && document.body.classList.contains("kid-rail-mo")) datNganKeo(false);
+  });
+
+  datNganKeo(false);   // đặt aria-hidden/aria-expanded khớp trạng thái đóng
   render();
 })();
 </script>
@@ -2161,6 +2356,10 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     actions.appendChild(miniBtn("Đăng xuất", "Thoát", function () {
       clearAllAppSessions();
       xoaSoLieu();
+      // Về trang tổng quan: đứng ở trang danh mục mà vừa đăng xuất thì người
+      // dùng thấy một bảng danh mục và một cổng đăng nhập chen giữa, không
+      // thấy dải thẻ app đâu.
+      if (window.KID_VE_TONG_QUAN) window.KID_VE_TONG_QUAN();
       renderAll();
     }));
 
@@ -2441,6 +2640,7 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
         if (/UNAUTHORIZED|hết hạn/i.test(err.message)) {
           clearAllAppSessions();
           xoaSoLieu();
+          if (window.KID_VE_TONG_QUAN) window.KID_VE_TONG_QUAN();
           renderAll();
           return;
         }
@@ -2526,6 +2726,25 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     return box;
   }
 
+  /**
+   * Tên kênh viết tắt cho bảng.
+   *
+   * Mã kênh trong Sheet của FC vốn đã là dạng viết tắt (OEM, GT2, 3T, NSKX)
+   * nên chỉ cần dùng thẳng mã; `name` bên đó là tên đầy đủ ("Xuất khẩu",
+   * "Kênh OEM") và làm cột đầu tiên rộng gấp đôi phần số. Bảng này chỉ rộng
+   * bằng một cột thẻ app.
+   *
+   * Bảng dưới đây CHỈ để đổi cách viết, KHÔNG phải để lọc: mã lạ vẫn hiện
+   * nguyên mã. Thêm một kênh mới ở FC thì cổng hiện đúng mã của nó ngay, chỉ
+   * thêm vào đây nếu muốn viết khác đi.
+   */
+  var TEN_TAT_KENH = { XK: "Export", EXPORT: "Export", ONLINE: "Online" };
+
+  function tenTatKenh(code) {
+    var k = String(code || "").trim().toUpperCase();
+    return TEN_TAT_KENH[k] || String(code || "").trim() || "(chưa rõ)";
+  }
+
   function veTamFC(d) {
     var out = [];
     var chuKy = d.baseMonth ? sThangDu(d.baseMonth) : "";
@@ -2533,7 +2752,7 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     if (!d.baseMonth) {
       out.push(tao("div", "kid-sum-note", "Chưa có chu kỳ dự báo nào."));
     } else if (d.laThangNay) {
-      out.push(tao("div", "kid-sum-note", "Chu kỳ " + chuKy + " — dự báo " + d.months.length + " tháng."));
+      out.push(tao("div", "kid-sum-note", "Chu kỳ " + chuKy + "."));
     } else {
       // Nói rõ đang xem chu kỳ nào. Hiện số của tháng trước mà không nói gì là
       // để người đọc tưởng chu kỳ tháng này đã được nhập.
@@ -2545,18 +2764,10 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
       var wrap = tao("div", "kid-sum-scroll");
       var tbl = tao("table", "kid-sum-tbl");
 
-      var cg = document.createElement("colgroup");
-      for (var ci = 0; ci < d.months.length + 1; ci++) cg.appendChild(document.createElement("col"));
-      var colTong = document.createElement("col");
-      colTong.className = "kid-sum-cot-tong";
-      cg.appendChild(colTong);
-      tbl.appendChild(cg);
-
       var thead = document.createElement("thead");
       var trh = document.createElement("tr");
       trh.appendChild(tao("th", null, "Kênh"));
       d.months.forEach(function (m) { trh.appendChild(tao("th", null, sThang(m))); });
-      trh.appendChild(tao("th", null, "Tổng " + d.months.length + "T"));
       thead.appendChild(trh);
       tbl.appendChild(thead);
 
@@ -2565,29 +2776,40 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
         var tr = document.createElement("tr");
         if (cls) tr.className = cls;
         tr.appendChild(tao("td", null, ten));
-        var tq = 0, tr2 = 0;
         for (var i = 0; i < d.months.length; i++) {
           var td = tao("td", null, sSo(qty[i]));
           td.appendChild(tao("em", null, sTien(rev[i])));
           tr.appendChild(td);
-          tq += Number(qty[i] || 0);
-          tr2 += Number(rev[i] || 0);
         }
-        var tdT = tao("td", null, sSo(tq));
-        tdT.appendChild(tao("em", null, sTien(tr2)));
-        tr.appendChild(tdT);
         tbody.appendChild(tr);
       }
-      d.channels.forEach(function (c) { veDong(c.ten || c.code, c.qty, c.rev); });
+      d.channels.forEach(function (c) { veDong(tenTatKenh(c.code), c.qty, c.rev); });
       if (d.total && d.channels.length > 1) veDong("Tổng", d.total.qty, d.total.rev, "kid-sum-tong");
       tbl.appendChild(tbody);
 
       wrap.appendChild(tbl);
       out.push(wrap);
-      var goiY = tao("div", "kid-sum-note kid-sum-goiy", "Bảng rộng hơn khung — cuộn ngang trong bảng để xem hết các tháng.");
+      var goiY = tao("div", "kid-sum-note kid-sum-goiy", "Bảng rộng hơn khung — cuộn ngang trong bảng.");
       goiY.hidden = true;                    // veSoLieu bật lên nếu đo thấy tràn
       out.push(goiY);
-      out.push(tao("div", "kid-sum-note", "Dòng trên mỗi ô là số máy, dòng dưới là doanh thu dự báo (VND) theo giá bình quân của danh mục."));
+      // Nói rõ hai con số KHÔNG cùng phạm vi. Không nói thì "số máy" cộng lại
+      // không ra doanh thu chia giá, và người đọc tưởng một trong hai sai.
+      out.push(tao("div", "kid-sum-note",
+        "Dòng trên: số máy (nhóm Máy TCM sx + Máy nhập khẩu). Dòng dưới: doanh thu dự báo VND của TẤT CẢ mặt hàng, kể cả lõi và linh kiện."));
+      if (d.lechPhanLoai && (d.lechPhanLoai.coDauSoMaKhongNhomMay || d.lechPhanLoai.nhomMayMaKhongDauSo)) {
+        // Cảnh báo về DỮ LIỆU, không phải về app: "số máy" đếm theo nhóm hàng,
+        // còn người dùng hay nhẩm theo mã bắt đầu bằng 1. Chỗ lệch phải hiện ra
+        // chứ không để con số khác kỳ vọng mà không rõ vì sao.
+        var ph = [];
+        if (d.lechPhanLoai.coDauSoMaKhongNhomMay) {
+          ph.push(d.lechPhanLoai.coDauSoMaKhongNhomMay + " mã bắt đầu bằng 1 chưa gán nhóm máy");
+        }
+        if (d.lechPhanLoai.nhomMayMaKhongDauSo) {
+          ph.push(d.lechPhanLoai.nhomMayMaKhongDauSo + " mã thuộc nhóm máy nhưng không bắt đầu bằng 1");
+        }
+        out.push(tao("div", "kid-sum-note kid-warn",
+          "Phân loại chưa khớp: " + ph.join("; ") + " — số máy đếm theo NHÓM HÀNG."));
+      }
     } else if (d.baseMonth) {
       out.push(tao("div", "kid-sum-note", "Chu kỳ này chưa có bản dự báo nào được chốt."));
     }
@@ -2615,11 +2837,17 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
       hangSo("Done MTD " + sThangOem(d.thangNay), sTien(d.done),
         d.planKpi ? pct + "% KPI" : null),
       hangSo("Plan update của sale", sTien(d.planUpdate)),
-      hangSo("Mục tiêu Plan KPI", sTien(d.planKpi),
-        d.soKhachCoKeHoach ? d.soKhachCoKeHoach + " khách" : null),
+      hangSo("Mục tiêu Plan KPI", d.kpiHetHan ? "—" : sTien(d.planKpi),
+        d.kpiHetHan ? null : (d.soKhachCoKeHoach ? d.soKhachCoKeHoach + " khách" : null)),
       hangSo("Tổng công nợ hiện tại", sTien(d.congNo),
         d.soKhachNo ? d.soKhachNo + " khách" : null, "strong")
     ]));
+    if (d.kpiHetHan) {
+      // Tab Plan2026 có tên CỨNG. Sang 2027 nó không còn là kế hoạch của năm
+      // hiện tại, và hiện số của năm cũ như mục tiêu tháng này là sai hẳn.
+      out.push(tao("div", "kid-sum-note kid-warn",
+        "Chưa có lưới KPI cho năm nay — tab Plan2026 chỉ dùng cho năm 2026."));
+    }
     if (d.soDongChoDuyet) {
       out.push(tao("div", "kid-sum-note kid-warn",
         d.soDongChoDuyet + " dòng kế hoạch đang chờ duyệt."));
@@ -2630,8 +2858,11 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
       out.push(tao("div", "kid-sum-note kid-warn",
         d.soDongThieuThang + " dòng trên tab Data chưa có tháng nên không được tính vào tháng nào."));
     }
+    // Ba nguồn khác nhau, nói rõ từng cái. Done lấy từ tab Data chứ KHÔNG phải
+    // cột Done của Plan_Thang — hai chỗ đó lệch nhau là chuyện thường, nên
+    // người đọc phải biết con số này của nguồn nào.
     out.push(tao("div", "kid-sum-note",
-      "Doanh thu tháng trước lấy từ tab Data (SAP). Done / Plan update / Plan KPI lấy từ tab Plan_Thang."));
+      "Doanh thu + Done: tab Data (SAP). Plan update: tab Plan_Thang. Plan KPI: tab Plan2026."));
     return out;
   }
 
@@ -2640,20 +2871,29 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     var out = [];
     var hangs = [
       hangSo("Tháng này (" + sThangDu(d.thangNay.thang) + ")", giaTri(d.thangNay.tong), null, "strong"),
+      hangSo("OEM", giaTri(d.thangNay.oem), null, "sub"),
+      hangSo("Brand", giaTri(d.thangNay.brand), null, "sub"),
       hangSo("Tháng sau (" + sThangDu(d.thangSau.thang) + ")", giaTri(d.thangSau.tong), null, "strong"),
+      hangSo("OEM", giaTri(d.thangSau.oem), null, "sub"),
+      hangSo("Brand", giaTri(d.thangSau.brand), null, "sub"),
       hangSo("Opened", giaTri(d.thangSau.opened), null, "sub"),
       hangSo("Drafted + Targeted", giaTri(d.thangSau.nhap), null, "sub")
     ];
-    // Chỉ hiện khi có: đây là phần dư (booked/shipped/closed/reviewed) để hai
-    // nhóm trên cộng lại đúng bằng tổng. Bằng 0 thì nó chỉ là một dòng nhiễu.
+    // Chỉ hiện khi có: đây là phần dư (booked/shipped/closed/reviewed) để ba
+    // nhóm trạng thái cộng lại đúng bằng tổng. Bằng 0 thì nó chỉ là dòng nhiễu.
     if (d.thangSau.khac.soLo) {
-      hangs.push(hangSo("Khác (booked, shipped, closed…)", giaTri(d.thangSau.khac), null, "sub"));
+      hangs.push(hangSo("Trạng thái khác", giaTri(d.thangSau.khac), null, "sub"));
     }
     out.push(nhomHang(hangs));
     if (d.soDonKhongCoThang) {
       out.push(tao("div", "kid-sum-note kid-warn",
         d.soDonKhongCoThang + " đơn chưa có ngày load nên không xếp được vào tháng nào."));
     }
+    // Phải nói rõ OEM/Brand và Opened/Drafted là HAI CÁCH CHIA của cùng một
+    // tổng, không phải hai cấp lồng nhau — cả hai đang thụt cùng một mức nên
+    // không nói thì người đọc sẽ cộng chúng lại với nhau.
+    out.push(tao("div", "kid-sum-note",
+      "OEM/Brand chia theo PIC; Opened và Drafted+Targeted chia theo trạng thái — hai cách chia của cùng một tổng."));
     out.push(tao("div", "kid-sum-note",
       "Một lô = một container đã tách; đơn chưa tách lô tính là một lô. Tiền là USD FOB."));
     return out;
@@ -2687,7 +2927,7 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     keys.forEach(function (k) {
       var app = KAROFI_APPS.filter(function (a) { return a.key === k; })[0];
       var st = soLieu[k];
-      var panel = tao("div", "kid-sum-panel" + (k === "FC" ? " kid-sum-wide" : ""));
+      var panel = tao("div", "kid-sum-panel");
 
       var head = tao("div", "kid-sum-title");
       head.appendChild(tao("b", null, app.ten));
