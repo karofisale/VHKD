@@ -90,37 +90,41 @@ Cổng **không** có luật phân quyền nào của riêng nó: mỗi backend 
 theo token. Lọc theo `s.user.apps` chỉ để không gọi vô ích.
 
 **Số cột CỐ ĐỊNH bằng số app của hệ, không `auto-fit`.** `auto-fit` gộp các
-track rỗng lại, nên người chỉ được cấp một app thấy một thẻ rộng bằng cả trang
-(đo được 1344px ở khổ 1400px). Cột cố định thì thẻ luôn rộng đúng một phần ba,
-dù người đó có một, hai hay ba app.
+track rỗng lại, nên người chỉ được cấp một app thấy thẻ số liệu rộng bằng cả
+trang (đo được 1344px ở khổ 1400px). Cột cố định thì thẻ luôn rộng đúng một
+phần ba, dù người đó có một, hai hay ba app.
 
 `--kid-so-app` và `--kid-luoi-gap` là **một nguồn cho cả hai lưới** —
 `init()` đặt `--kid-so-app` từ `KAROFI_APPS.length` nên thêm app thứ tư không
 phải sửa CSS. Hai lưới bắt buộc dùng chung hai biến đó (khai một lần ở
 `.kid-app-grid, .kid-sum-grid`), và hai section phải cùng đệm ngang.
 
-Số **THẺ** thì theo quyền của từng người (`appMoDuoc()`):
+**Cả hai lưới luôn có ĐỦ SỐ Ô bằng số app**, kể cả app người này không được
+cấp quyền:
 
-| Số app | Bố cục |
-|---|---|
-| 1 | một track rộng 1/3, `justify-content: center` (lớp `.kid-luoi-1`) |
-| 2 | cột 1 và 2, không di chuyển, vẫn rộng 1/3 |
-| 3 | kín hàng |
-| 0 | không thẻ nào, chỉ còn dòng nhắc đi xin quyền |
+- lưới thẻ app: app chưa cấp quyền vẫn có thẻ, chỉ **làm mờ** (`.kid-locked`,
+  chân thẻ ghi "Chưa có quyền");
+- lưới số liệu: app không có số để lại một **ô trống** `.kid-sum-oto`.
 
-Ở ≤780px hạ về 2 cột (thẻ đơn lẻ rộng 1/2), ở ≤520px về 1 cột và **bỏ luôn
-phép căn giữa** — căn giữa một track rộng 100% chỉ thêm một lớp tính toán.
+Nhờ vậy thẻ số liệu tự nằm dưới đúng thẻ app của nó ở mọi khổ màn hình, không
+cần đặt `grid-column` bằng JS — thứ sẽ sai ngay khi media query hạ số cột, và
+còn sinh cột ẩn nếu chỉ số vượt số cột đang có.
 
-App **chưa được cấp quyền** gom thành một dòng chữ `.kid-app-khoa` dưới lưới,
-không còn là thẻ mờ trong lưới. Vẫn phải nói ra chứ không xoá hẳn: người đáng
-lẽ được cấp một app mà chưa được cấp thì cần biết app đó tồn tại để đi xin
-quyền. **Chưa đăng nhập thì vẫn hiện đủ ba thẻ và vẫn bấm được** — mỗi app còn
+Ở ≤780px hạ về 2 cột; ở ≤520px về 1 cột và **ẩn luôn các ô trống**, vì một cột
+thì không còn cột nào để căn theo mà mỗi ô trống vẫn ăn một khoảng `gap`.
+
+**Chưa đăng nhập thì không thẻ nào bị làm mờ và vẫn bấm được** — mỗi app còn
 màn hình đăng nhập riêng, chặn đường đó là bước lùi.
 
-Cách kiểm: `getBoundingClientRect()` của `.kid-app` và `.kid-sum-panel`, hai
-mảng phải giống nhau từng số. `test/portal-stub.py` bên Karofi ID có sẵn bốn
-tài khoản cho bốn trường hợp: `hai.cao` (3 app), `hai.app` (2), `ashley` (1),
-`khong.app` (0).
+Dải thẻ **không có nhãn** "Ứng dụng vận hành": nó nằm ngay dưới thanh thương
+hiệu và tự nói nó là gì. Đầu mục `.kid-apps-head` giờ chỉ còn chỗ cho câu mời
+đăng nhập, nên `renderMeta()` ẩn cả nó khi đã đăng nhập — để nguyên thì nó bỏ
+lại một khoảng `gap` trống.
+
+Cách kiểm: `getBoundingClientRect()` của `.kid-app` và của **mọi con** của
+`#kidSumGrid` (kể cả ô trống) — hai mảng phải giống nhau từng số.
+`test/portal-stub.py` bên Karofi ID có sẵn bốn tài khoản cho bốn trường hợp:
+`hai.cao` (3 app), `hai.app` (2), `ashley` (1), `khong.app` (0).
 
 Bảng kênh × tháng của tấm Sale Forecast có vùng cuộn ngang RIÊNG
 (`.kid-sum-scroll`) và tấm phải có `min-width: 0`. Thiếu một trong hai thì bảng
