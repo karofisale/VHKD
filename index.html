@@ -3320,6 +3320,60 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     });
   }
 
+  // ---------------------------------------------------------------
+  // Hâm nóng backend đăng nhập
+  // ---------------------------------------------------------------
+  //
+  // Karofi ID chỉ được gọi lúc đăng nhập và đổi PIN, nên container Apps Script
+  // của nó hầu như luôn nguội. Đo 04–08/09/2026 (dự án Do-Duong-Mang, mỗi 10
+  // phút, 108 lượt): `ping` — endpoint KHÔNG chạm Sheet, không đọc Properties
+  // — trung bình 9,5 giây, 52 lượt trên 8 giây. Năm lượt gọi liền nhau chỉ ra
+  // nguyên nhân:
+  //
+  //     9183   1842   1678   1783   1502 ms
+  //
+  // Lượt đầu nguội; từ lượt hai trở đi Karofi ID là backend NHANH NHẤT trong
+  // bốn cái (OEM ~1,8s, FC ~1,8s, Export ~2,3s). Ba app kia nhanh sẵn vì có
+  // người dùng suốt ngày nên container luôn nóng — Karofi ID thì không, vì
+  // token tự chứa và sống 12 giờ, cổng không gọi lại nó lúc tải trang.
+  //
+  // Nên KHÔNG có gì đáng tối ưu trong mã Karofi ID: cùng một hàm ping ấy chạy
+  // 1,5 giây khi nóng. Việc cần làm là trả tiền khởi động nguội vào lúc người
+  // dùng đang gõ, chứ không phải lúc họ bấm Đăng nhập — gõ tên và PIN sáu số
+  // mất vài giây, vừa đủ để container kịp sống.
+  //
+  // Không dùng callApi: hàm đó có thử lại và đẩy lỗi ra giao diện. Lượt hâm
+  // nóng thất bại thì phải im lặng — nó không phải việc người dùng yêu cầu, và
+  // một dòng đỏ vì nó là báo sai chỗ.
+  // 30 giây, không phải 60. Đo lại chính endpoint này với các khoảng nghỉ khác
+  // nhau (08/09/2026):
+  //
+  //     nguội 5 phút  10546 ms
+  //     nghỉ 6 giây    1684 ms
+  //     nghỉ 12 giây   1780 ms
+  //     nghỉ 30 giây   2881 ms   <- đã bắt đầu nguội lại
+  //
+  // Nên ngưỡng phải nằm dưới mốc container bắt đầu nguội, chứ không phải một
+  // con số tròn. Một lượt hâm thừa tốn vài chục byte; một lượt thiếu tốn của
+  // người dùng mười giây.
+  var HAM_NONG_CACH_MS = 30000;
+  var lucHamNong = 0;
+
+  function hamNong() {
+    if (!KAROFI_ID_API) return;
+    var gio = Date.now();
+    // Chặn gọi dồn: mỗi lần gõ một ký tự đều chạm vào đây.
+    if (gio - lucHamNong < HAM_NONG_CACH_MS) return;
+    lucHamNong = gio;
+    try {
+      fetch(KAROFI_ID_API, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ fn: "ping", args: [] })
+      }).catch(function () { });
+    } catch (e) { /* im lặng, xem chú thích trên */ }
+  }
+
   function init() {
     el = {
       account: $("kidAccount"),
@@ -3360,6 +3414,10 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
       input.addEventListener("keydown", function (e) {
         if (e.key === "Enter") doLogin();
       });
+      // Hâm nóng lại khi người dùng bắt đầu chạm vào ô: trang có thể đã mở sẵn
+      // từ lâu, lượt hâm ở init() lúc đó đã nguội lại rồi.
+      input.addEventListener("focus", hamNong);
+      input.addEventListener("input", hamNong);
     });
     [el.oldPin, el.newPin, el.newPin2].forEach(function (input) {
       input.addEventListener("keydown", function (e) {
@@ -3392,6 +3450,11 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     renderFallback();
     renderAll();
     taiSoLieu();
+
+    // Chưa đăng nhập nghĩa là cổng đăng nhập đang hiện giữa trang và việc kế
+    // tiếp gần như chắc chắn là gõ PIN. Đã đăng nhập thì KHÔNG hâm: token còn
+    // sống 12 giờ, cổng không cần Karofi ID nữa, hâm chỉ là một lượt gọi vô ích.
+    if (!readSession()) hamNong();
   }
 
   if (document.readyState === "loading") {
