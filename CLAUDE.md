@@ -10,14 +10,30 @@ thứ người dùng sẽ thấy.
 `D:\Operation\Claude\Projects\Karofi-ID`. Cổng này chỉ gọi vào đó
 (`KAROFI_ID_API` trong `index.html`).
 
-## Hai chỗ giữ danh sách của cả hệ — sửa app là phải sửa ở đây
+## Khối SINH TỰ ĐỘNG — đừng sửa tay
 
-**`APP_SESSION_KEYS` + `OEM_CACHE_DB`** trong `clearAllAppSessions()`. Đây là
-nơi DUY NHẤT biết đủ khoá lưu trữ của cả bốn bề mặt. Xoá mỗi `karofi.session` là
-**chưa** đăng xuất: cả ba client đều có đường lùi lấy phiên riêng trong
-localStorage, và cả ba backend còn chấp nhận token cũ trong CacheService thêm 6
-giờ — nên trên máy dùng chung, người sau mở `/OEM/` là vào thẳng phiên người
-trước.
+Đoạn giữa hai mốc `/* ===== LỚP PHIÊN DÙNG CHUNG — SINH TỰ ĐỘNG ... */` do
+`Karofi-ID/tools/dong-bo-lop-phien.mjs` ghi ra. Nó chứa `KAROFI_APPS` (danh
+sách thẻ app, kèm trường `api` = URL `/exec` của backend từng app),
+`KAROFI_APP_SESSION_KEYS` và `KAROFI_OEM_CACHE_DB`.
+
+**Sửa ba danh sách đó ở `Karofi-ID/web/karofi-apps.js`** rồi chạy:
+
+```bash
+cd "D:/Operation/Claude/Projects/Karofi-ID" && node tools/dong-bo-lop-phien.mjs --ghi
+```
+
+Sửa trực tiếp ở đây thì lần đồng bộ sau ghi đè, và `test/lop-phien.test.js`
+bên Karofi ID đỏ trước đó.
+
+## Vì sao danh sách khoá phiên quan trọng
+
+`KAROFI_APP_SESSION_KEYS` + `KAROFI_OEM_CACHE_DB` trong `clearAllAppSessions()`
+là nơi DUY NHẤT biết đủ khoá lưu trữ của cả bốn bề mặt. Xoá mỗi
+`karofi.session` là **chưa** đăng xuất: cả ba client đều có đường lùi lấy phiên
+riêng trong localStorage, và cả ba backend còn chấp nhận token cũ trong
+CacheService thêm 6 giờ — nên trên máy dùng chung, người sau mở `/OEM/` là vào
+thẳng phiên người trước.
 
 Hàm này được gọi ở **cả ba đường ra**: nút Đăng xuất, hết hạn theo đồng hồ, và
 token bị server từ chối. Đường thứ ba quan trọng nhất — sau khi xoay
@@ -27,8 +43,34 @@ việc thu hồi không có tác dụng gì.
 Cố ý **không** xoá `exportops_theme` và `exportops_showLineImg`: đó là tuỳ chọn
 hiển thị của máy, không phải danh tính.
 
-**`APPS`** — danh sách thẻ ứng dụng. Trùng với `CAC_APP_` bên FC/OEM và
-`KAROFI_CAC_APP_` bên Export. Thêm app mới phải sửa cả bốn chỗ.
+## Số liệu tổng quan
+
+Khối `.kid-sum` gọi **thẳng backend của từng app**, không qua Karofi ID:
+
+| Tấm | Endpoint | Yêu cầu | Phản hồi |
+|---|---|---|---|
+| Sale Forecast | `getPortalStats` | `{action, token}` | object thẳng / `{error}` |
+| OEM Portal | `getPortalStats` | `{fn, args:[token]}` | `{result}` / `{error}` |
+| Export Hub | `api_portalStats` | `{fn, args:[token]}` | `{ok:true,…}` / `{ok:false,error}` |
+
+Ba hợp đồng khác nhau; `SUM_APP` là chỗ DUY NHẤT trong file biết sự khác nhau
+đó. Đừng "chuẩn hoá" bằng cách sửa ba backend cho giống nhau — hợp đồng của
+chúng đang được ba client khác dùng.
+
+Ba lượt gọi **song song và độc lập**: app chậm chỉ làm tấm của nó hiện muộn,
+app lỗi chỉ làm tấm của nó báo lỗi. Đừng gộp thành `Promise.all` — backend OEM
+có lúc mất 10-30 giây, và chờ cả ba là để cả khối trống suốt thời gian đó.
+
+Cổng **không** có luật phân quyền nào của riêng nó: mỗi backend tự ép phạm vi
+theo token. Lọc theo `s.user.apps` chỉ để không gọi vô ích.
+
+Bảng kênh × tháng của tấm Sale Forecast có vùng cuộn ngang RIÊNG
+(`.kid-sum-scroll`) và tấm phải có `min-width: 0`. Thiếu một trong hai thì bảng
+đó đẩy rộng cả trang và kéo lệch cả thanh trên cùng — mặc định của grid item là
+`min-content`.
+
+Thử trên máy: `test/portal-stub.py` bên Karofi ID giả lập cả ba backend (đặt
+`EXPORT_LOI = True` để xem nhánh một tấm hỏng).
 
 ## manifest
 

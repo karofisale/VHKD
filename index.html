@@ -526,10 +526,6 @@
   a.kid-app:hover { border-color: var(--accent); transform: translateY(-1px); }
   .kid-app-name { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
   .kid-app-desc { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
-  .kid-app-stats { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
-  .kid-stat { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; }
-  .kid-stat-label { color: var(--ink-faint); }
-  .kid-stat-value { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink); }
   .kid-app-foot {
     margin-top: 6px;
     font-family: var(--font-mono);
@@ -540,6 +536,147 @@
   }
   .kid-app.kid-locked { opacity: .58; cursor: default; }
   .kid-app.kid-locked .kid-app-foot { color: var(--ink-faint); }
+
+  /* ===================================================================
+     Số liệu tổng quan (2026-09)
+
+     BỀ NGANG KHÔNG ĐƯỢC VƯỢT KHUNG. Ba tấm nằm trong một grid auto-fit
+     nên chúng tự xuống dòng thay vì bị bóp; tấm Sale Forecast là một bảng
+     kênh × 4 tháng nên nó chiếm cả hàng và có vùng cuộn NGANG RIÊNG
+     (.kid-sum-scroll). Không có vùng cuộn riêng thì bảng đó đẩy rộng cả
+     trang và mọi thứ khác — kể cả thanh trên cùng — bị kéo lệch theo.
+     min-width:0 trên tấm là bắt buộc: mặc định của grid item là min-content,
+     nên một bảng rộng vẫn phá được cột nếu thiếu dòng đó.
+     =================================================================== */
+  .kid-sum {
+    border-bottom: 1px solid var(--line);
+    padding: 18px 28px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .kid-sum-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .kid-sum-head-right { display: flex; align-items: baseline; gap: 10px; }
+  .kid-sum-when { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); }
+  .kid-sum-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 12px;
+  }
+  .kid-sum-panel {
+    min-width: 0;
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .kid-sum-panel.kid-sum-wide { grid-column: 1 / -1; }
+  .kid-sum-title { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .kid-sum-title b { font-family: var(--font-display); font-size: 14.5px; font-weight: 600; }
+  .kid-sum-scope {
+    font-size: 10.5px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    border-radius: 5px;
+    padding: 2px 7px;
+  }
+  .kid-sum-note { font-size: 12px; color: var(--ink-faint); line-height: 1.5; }
+  .kid-sum-note.kid-bad { color: var(--critical); }
+  .kid-sum-note.kid-warn { color: var(--warning); }
+
+  /* Hàng nhãn — số. Nhãn co được, số thì không: `flex: 1 1 auto` + min-width 0
+     ở nhãn giữ cho số dài không bị cắt hay đẩy tràn ra ngoài tấm. */
+  .kid-sum-rows { display: flex; flex-direction: column; gap: 1px; }
+  .kid-sum-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .kid-sum-row:last-child { border-bottom: none; }
+  .kid-sum-row.kid-sum-sub { padding-left: 12px; }
+  .kid-sum-row.kid-sum-strong { border-top: 1px solid var(--line); margin-top: 3px; }
+  .kid-sum-k { flex: 1 1 auto; min-width: 0; font-size: 12.5px; color: var(--ink-soft); }
+  .kid-sum-row.kid-sum-sub .kid-sum-k { font-size: 12px; color: var(--ink-faint); }
+  .kid-sum-row.kid-sum-strong .kid-sum-k { font-weight: 600; color: var(--ink); }
+  .kid-sum-v {
+    flex: 0 0 auto;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .kid-sum-row.kid-sum-strong .kid-sum-v { font-weight: 700; }
+  /* Ghi chú phụ đứng TRƯỚC con số, không phải sau. Đứng sau thì mỗi hàng có
+     một chú thích dài khác nhau, và cột số bị đẩy sang trái theo độ dài đó —
+     một cột tiền không thẳng lề rất khó so bằng mắt. */
+  .kid-sum-v small { font-family: var(--font-body); font-size: 11px; color: var(--ink-faint); margin-right: 7px; }
+
+  .kid-sum-scroll { overflow-x: auto; margin: 0 -2px; padding: 0 2px 2px; }
+  /* Bảng rộng hơn khung thì mép phải mờ dần — không có dấu hiệu nào thì cột
+     bị cắt giữa dòng trông y như bảng đã hết, và người dùng không biết là
+     cuộn được. Chỉ bật khi thật sự tràn (JS đo rồi gắn lớp), vì một mép mờ
+     trên bảng vừa khít là một dấu hiệu nói sai. */
+  .kid-sum-scroll.kid-co-cuon {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  }
+  table.kid-sum-tbl { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  table.kid-sum-tbl th, table.kid-sum-tbl td {
+    padding: 6px 10px;
+    text-align: right;
+    border-bottom: 1px solid var(--line-soft);
+    white-space: nowrap;
+  }
+  table.kid-sum-tbl th:first-child, table.kid-sum-tbl td:first-child { text-align: left; padding-left: 0; }
+  table.kid-sum-tbl th {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  table.kid-sum-tbl td { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  table.kid-sum-tbl td:first-child { font-family: var(--font-body); color: var(--ink-soft); }
+  table.kid-sum-tbl td em {
+    display: block;
+    font-family: var(--font-body);
+    font-style: normal;
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+  table.kid-sum-tbl tr.kid-sum-tong td { border-top: 1px solid var(--line); border-bottom: none; font-weight: 700; color: var(--ink); }
+  table.kid-sum-tbl tr.kid-sum-tong td:first-child { font-weight: 600; color: var(--ink); }
+  table.kid-sum-tbl col.kid-sum-cot-tong { background: var(--bg-sunken); }
+
+  .kid-sum-plans { display: flex; flex-direction: column; gap: 4px; }
+  .kid-sum-plan {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+    padding: 5px 9px;
+    border-radius: 7px;
+    background: var(--warm-soft);
+    color: var(--warm);
+  }
+  .kid-sum-plan b { font-weight: 600; }
+  .kid-sum-plan span { color: var(--ink-soft); font-size: 11.5px; }
+
+  /* Chưa đăng nhập thì không có token, không có gì để hiện. */
+  body.kid-anon .kid-sum { display: none; }
+  @media (max-width: 780px) {
+    .kid-sum { padding: 16px 18px 18px; }
+  }
 
   /* Chế độ rút gọn: chỉ hiện phần đăng nhập và dải thẻ ứng dụng.
      Đây là ẩn HIỂN THỊ, không phải chặn truy cập — trang này là trang tĩnh
@@ -559,8 +696,11 @@
     padding-top: 28px;
   }
   body.kid-limited .rail { justify-content: flex-start; }
-  /* Chỉ còn ba thẻ trong cả vùng chính, nên đưa chúng về giữa thay vì dính
-     mép trên và bỏ lại một khoảng trống lớn phía dưới. */
+  /* Vùng chính khi rút gọn chỉ còn dải thẻ app và khối số liệu tổng quan, nên
+     đưa chúng về giữa thay vì dính mép trên và bỏ lại một khoảng trống lớn
+     phía dưới. Khối số liệu KHÔNG bị ẩn ở chế độ này: portal_full quyết định
+     ai xem được danh mục kỹ năng, còn số của app thì người có quyền vào app
+     đó đương nhiên được xem. */
   body.kid-limited .main { justify-content: center; }
   body.kid-limited .kid-app-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
 
@@ -833,6 +973,21 @@
         <div class="kid-apps-meta" id="kidAppsMeta"></div>
       </div>
       <div class="kid-app-grid" id="kidAppGrid"></div>
+    </section>
+
+    <!-- Số liệu tổng quan. Ba tấm do JS dựng, mỗi tấm gọi backend của app đó
+         một cách độc lập: app nào chậm chỉ làm tấm đó hiện muộn, app nào lỗi
+         chỉ làm tấm đó báo lỗi. Chỉ hiện tấm của app mà người này có quyền
+         vào — và máy chủ vẫn ép phạm vi lần nữa theo vai. -->
+    <section class="kid-sum" id="kidSum" aria-label="Số liệu tổng quan">
+      <div class="kid-sum-head">
+        <div class="eyebrow">Số liệu tổng quan</div>
+        <div class="kid-sum-head-right">
+          <span class="kid-sum-when" id="kidSumWhen"></span>
+          <button class="kid-mini" id="kidSumReload" type="button">Tải lại</button>
+        </div>
+      </div>
+      <div class="kid-sum-grid" id="kidSumGrid"></div>
     </section>
     <div class="topbar">
       <div class="eyebrow" id="groupEyebrow">Nhóm công việc</div>
@@ -1805,21 +1960,24 @@ const KAROFI_APPS = [
     ten: 'Sale Forecast',
     nhan: 'Forecast',
     href: '/FC/',
-    mo_ta: 'Lập và chốt kế hoạch sản lượng theo kỳ cho từng đơn vị kinh doanh.'
+    mo_ta: 'Lập và chốt kế hoạch sản lượng theo kỳ cho từng đơn vị kinh doanh.',
+    api: 'https://script.google.com/macros/s/AKfycbyyzw_uTdteqLobl6TB1DvcBxqE4BiorHFksXLx4Zc5jItQJD943vjXSynAecurccmS/exec'
   },
   {
     key: 'OEM',
     ten: 'OEM Portal',
     nhan: 'OEM',
     href: '/OEM/',
-    mo_ta: 'Đơn hàng, doanh thu và công nợ kênh OEM.'
+    mo_ta: 'Đơn hàng, doanh thu và công nợ kênh OEM.',
+    api: 'https://script.google.com/macros/s/AKfycbwKe1b7gUOnp9gPF_q6jlzTFIrD3DOtkFM8oMQf41D1iXGrEwmYElWZeupCNG-Szy7DfQ/exec'
   },
   {
     key: 'EXPORT',
     ten: 'Export Hub',
     nhan: 'Xuất khẩu',
     href: '/export/pi-app.html',
-    mo_ta: 'Lập PI, sinh chứng từ và theo dõi lô hàng xuất khẩu.'
+    mo_ta: 'Lập PI, sinh chứng từ và theo dõi lô hàng xuất khẩu.',
+    api: 'https://script.google.com/macros/s/AKfycbxGn0bRwcl94jkxWCa6o_ONkdJm9IrxapT3PoNCSILN-HHLinoFIZQ4GBx8--MowF_S/exec'
   }
 ];
 
@@ -1956,7 +2114,6 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
   // ---------------------------------------------------------------
 
   var el = {};
-  var summary = null;
 
   function $(id) { return document.getElementById(id); }
 
@@ -2003,7 +2160,7 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     if (laQuanTri()) actions.appendChild(miniBtn("Quản trị", "QT", openAdminModal));
     actions.appendChild(miniBtn("Đăng xuất", "Thoát", function () {
       clearAllAppSessions();
-      summary = null;
+      xoaSoLieu();
       renderAll();
     }));
 
@@ -2098,30 +2255,9 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
       node.appendChild(name);
       node.appendChild(desc);
 
-      // Thẻ bị khoá thì không hiện số liệu: người không vào được app đó cũng
-      // không có việc gì với con số của nó. Máy chủ đã lọc theo quyền rồi,
-      // nhưng đây là chỗ hiển thị nên tự kiểm lại một lần nữa.
-      var stats = locked ? [] :
-        (summary && summary.items || []).filter(function (i) { return i.app === app.key; });
-      if (stats.length) {
-        var box = document.createElement("div");
-        box.className = "kid-app-stats";
-        stats.forEach(function (st) {
-          var row = document.createElement("div");
-          row.className = "kid-stat";
-          var l = document.createElement("span");
-          l.className = "kid-stat-label";
-          l.textContent = st.label;
-          var v = document.createElement("span");
-          v.className = "kid-stat-value";
-          v.textContent = st.value;
-          row.appendChild(l);
-          row.appendChild(v);
-          box.appendChild(row);
-        });
-        node.appendChild(box);
-      }
-
+      // Số liệu KHÔNG nằm trong thẻ app nữa: chúng ở khối "Số liệu tổng quan"
+      // ngay dưới, nơi có đủ chỗ cho một bảng kênh × tháng. Để cả hai nơi cùng
+      // hiện số là mời hai con số cùng nghĩa trôi lệch nhau.
       var foot = document.createElement("div");
       foot.className = "kid-app-foot";
       foot.textContent = locked ? "Chưa có quyền" : "Mở app →";
@@ -2135,15 +2271,9 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     if (!el.appsMeta) return;
     var s = readSession();
     if (!KAROFI_ID_API) { el.appsMeta.textContent = ""; return; }
-    if (!s) { el.appsMeta.textContent = "Đăng nhập để xem số liệu tổng quan"; return; }
-    if (summary && summary.updatedAt) {
-      var d = new Date(summary.updatedAt);
-      el.appsMeta.textContent = "Số liệu lúc " +
-        ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2) +
-        " ngày " + ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2);
-    } else {
-      el.appsMeta.textContent = "Chưa có số liệu tổng quan";
-    }
+    // Đã đăng nhập thì khối "Số liệu tổng quan" bên dưới tự nói giờ cập nhật
+    // của từng app, nên dòng này chỉ còn việc mời đăng nhập.
+    el.appsMeta.textContent = s ? "" : "Đăng nhập để xem số liệu tổng quan";
   }
 
   /**
@@ -2175,23 +2305,428 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     document.body.classList.toggle('kid-anon', !!KAROFI_ID_API && !readSession());
   }
 
-  function loadSummary() {
+  // ---------------------------------------------------------------
+  // Số liệu tổng quan
+  //
+  // Cổng gọi THẲNG backend của từng app, KHÔNG qua Karofi ID. Vì sao:
+  //
+  //   - Phân quyền. Mỗi backend tự ép phạm vi theo token của người đang xem,
+  //     bằng chính hàm mà mọi màn hình khác của nó đi qua (scopedBU_ ở FC,
+  //     oemAppScopeOf_ ở OEM, getRevenueOrders_ ở Export). Cổng không có luật
+  //     quyền nào của riêng nó, nên không có luật nào để viết sai.
+  //   - Định nghĩa. "Version nào là bản chốt", "một SO tách lô tính thành mấy
+  //     shipment", "tiêu đề tab Debt ở hàng 3" — đều là quy ước của app đó.
+  //
+  // Ba lượt gọi chạy SONG SONG và ĐỘC LẬP. Backend OEM là backend chậm nhất
+  // (có lúc 10-30 giây) nên chờ cả ba rồi mới vẽ là để cả khối trống trong
+  // suốt thời gian đó. Mỗi tấm tự vẽ khi số của nó về, và một app hỏng chỉ
+  // làm tấm của nó báo lỗi.
+  // ---------------------------------------------------------------
+
+  /**
+   * Ba app, ba hình dạng yêu cầu/phản hồi khác nhau — đây là chỗ duy nhất
+   * trong cổng biết sự khác nhau đó.
+   *
+   *   FC     {action, token}      -> trả về object thẳng, lỗi là {error}
+   *   OEM    {fn, args:[token]}   -> {result} / {error}
+   *   EXPORT {fn, args:[token]}   -> {ok:true, ...} / {ok:false, error}
+   *
+   * Đừng "chuẩn hoá" bằng cách sửa ba backend cho giống nhau: hợp đồng của
+   * chúng đang được ba client khác dùng, đổi là làm ba app kia phải deploy
+   * đồng thời với cổng.
+   */
+  var SUM_APP = {
+    FC: {
+      than: function (token) { return { action: "getPortalStats", token: token }; },
+      boc: function (json) {
+        if (json && json.error) throw new Error(json.error);
+        if (!json || typeof json !== "object") throw new Error("__retry__Phản hồi không hợp lệ");
+        return json;
+      },
+      ve: veTamFC
+    },
+    OEM: {
+      than: function (token) { return { fn: "getPortalStats", args: [token] }; },
+      boc: function (json) {
+        if (json && json.error) throw new Error(json.error);
+        if (!json || !("result" in json)) throw new Error("__retry__Phản hồi không hợp lệ");
+        return json.result;
+      },
+      ve: veTamOEM
+    },
+    EXPORT: {
+      than: function (token) { return { fn: "api_portalStats", args: [token] }; },
+      boc: function (json) {
+        if (!json || typeof json.ok !== "boolean") throw new Error("__retry__Phản hồi không hợp lệ");
+        if (!json.ok) throw new Error(json.error || "Không lấy được số liệu.");
+        return json;
+      },
+      ve: veTamEXPORT
+    }
+  };
+
+  var SUM_TIMEOUT_MS = 55000;
+  var SUM_RETRY = 1;
+
+  /** key app -> {trangThai:'dang'|'xong'|'loi', duLieu, loi, luc} */
+  var soLieu = {};
+
+  function xoaSoLieu() {
+    soLieu = {};
+    if (el.sumWhen) el.sumWhen.textContent = "";
+  }
+
+  function goiApp(app, n) {
     var s = readSession();
-    if (!KAROFI_ID_API || !s) return;
-    callApi("summary", [s.token]).then(function (res) {
-      summary = res;
-      renderApps();
-      renderMeta();
-    }).catch(function (err) {
-      // Hết hạn/bị thu hồi thì đưa về trạng thái chưa đăng nhập, im lặng.
-      // Dọn CẢ phiên riêng của ba app: thu hồi token chung mà để phiên riêng
-      // sống tiếp 6 giờ thì việc thu hồi không có tác dụng gì.
-      if (/UNAUTHORIZED/.test(err.message)) {
-        clearAllAppSessions();
-        renderAll();
+    if (!s) return Promise.reject(new Error("UNAUTHORIZED: Chưa đăng nhập."));
+    var dinhNghia = SUM_APP[app.key];
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, SUM_TIMEOUT_MS);
+
+    return fetch(app.api, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(dinhNghia.than(s.token)),
+      signal: ctrl.signal
+    }).then(function (res) {
+      clearTimeout(timer);
+      if (!res.ok) throw new Error("__retry__HTTP " + res.status);
+      return res.text();
+    }).then(function (text) {
+      var json;
+      try {
+        json = JSON.parse(text);
+      } catch (e) {
+        // Đường mạng ở đây thỉnh thoảng trả HTML thay vì JSON (xem chú thích
+        // của callApi) — đó là lỗi đáng thử lại, không phải câu trả lời.
+        throw new Error("__retry__Phản hồi không phải JSON");
       }
-      // Lỗi khác: cứ để thẻ app hiện không có số, không chặn điều hướng.
+      return dinhNghia.boc(json);
+    }).catch(function (err) {
+      clearTimeout(timer);
+      var thuLai = err.name === "AbortError" ||
+        err.message.indexOf("__retry__") === 0 ||
+        err.message.indexOf("Failed to fetch") >= 0 ||
+        err.message.indexOf("NetworkError") >= 0;
+      if (thuLai && n < SUM_RETRY) return goiApp(app, n + 1);
+      throw new Error(err.message.replace("__retry__", ""));
     });
+  }
+
+  function taiSoLieu() {
+    if (!el.sumGrid) return;
+    var s = readSession();
+    if (!KAROFI_ID_API || !s) { xoaSoLieu(); veSoLieu(); return; }
+
+    var duocVao = s.user.apps || [];
+    var canGoi = KAROFI_APPS.filter(function (app) {
+      // Chỉ gọi backend của app mà token này có quyền vào. Đây là lọc HIỂN
+      // THỊ cho gọn — máy chủ vẫn từ chối token không có quyền, nên bỏ dòng
+      // này cũng không lộ gì, chỉ thành ba lượt gọi vô ích.
+      return app.api && duocVao.indexOf(app.key) >= 0 && SUM_APP[app.key];
+    });
+
+    soLieu = {};
+    canGoi.forEach(function (app) { soLieu[app.key] = { trangThai: "dang" }; });
+    veSoLieu();
+
+    canGoi.forEach(function (app) {
+      goiApp(app, 0).then(function (du) {
+        soLieu[app.key] = { trangThai: "xong", duLieu: du, luc: new Date() };
+        veSoLieu();
+      }).catch(function (err) {
+        // Token bị thu hồi / hết hạn: đưa cả cổng về trạng thái chưa đăng
+        // nhập, và dọn cả phiên riêng của ba app — để nguyên thì việc thu hồi
+        // không có tác dụng gì trong 6 giờ tiếp theo.
+        if (/UNAUTHORIZED|hết hạn/i.test(err.message)) {
+          clearAllAppSessions();
+          xoaSoLieu();
+          renderAll();
+          return;
+        }
+        soLieu[app.key] = { trangThai: "loi", loi: err.message };
+        veSoLieu();
+      });
+    });
+  }
+
+  // ----- định dạng số -----
+
+  function sSo(v) {
+    return Number(v || 0).toLocaleString("vi-VN", { maximumFractionDigits: 0 });
+  }
+
+  /**
+   * Tiền VND. Số doanh thu ở đây là hàng tỷ, in đủ chữ số thì một ô bảng dài
+   * hơn cả tấm — nên quy về "tỷ"/"tr". Giữ 2 số thập phân ở mức tỷ vì 0,05 tỷ
+   * là 50 triệu, làm tròn về số nguyên tỷ là mất một con số có nghĩa thật.
+   */
+  function sTien(v) {
+    var n = Number(v || 0);
+    if (!n) return "0";
+    var am = n < 0 ? "-" : "";
+    n = Math.abs(n);
+    if (n >= 1e9) return am + (n / 1e9).toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " tỷ";
+    if (n >= 1e6) return am + (n / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " tr";
+    return am + sSo(n);
+  }
+
+  /** Tiền của Export là USD (FOB), không quy đổi — giống mọi màn hình của app đó. */
+  function sUsd(v) {
+    return "$" + sSo(v);
+  }
+
+  /** '2026-09-01' hoặc '2026-09' -> 'T09/26'. Ngắn để 6 cột vừa một hàng. */
+  function sThang(key) {
+    var m = String(key || "").match(/^(\d{4})-(\d{2})/);
+    if (!m) return String(key || "");
+    return "T" + m[2] + "/" + m[1].substring(2);
+  }
+
+  /** Bản đủ năm — dùng trong câu văn, nơi 'T09/26' đọc như một mã hơn một tháng. */
+  function sThangDu(key) {
+    var m = String(key || "").match(/^(\d{4})-(\d{2})/);
+    if (!m) return String(key || "");
+    return "T" + m[2] + "/" + m[1];
+  }
+
+  /** 'T09-2026' (định dạng của OEM) -> 'T09/2026'. */
+  function sThangOem(key) {
+    var m = String(key || "").match(/^T(\d{2})-(\d{4})$/);
+    return m ? "T" + m[1] + "/" + m[2] : String(key || "");
+  }
+
+  function sGio(d) {
+    if (!d) return "";
+    return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+  }
+
+  // ----- dựng DOM -----
+
+  function tao(tag, cls, chu) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (chu !== undefined && chu !== null) n.textContent = String(chu);
+    return n;
+  }
+
+  function hangSo(nhan, giaTri, phu, kieu) {
+    var row = tao("div", "kid-sum-row" + (kieu ? " kid-sum-" + kieu : ""));
+    row.appendChild(tao("span", "kid-sum-k", nhan));
+    var v = tao("span", "kid-sum-v");
+    if (phu) v.appendChild(tao("small", null, phu));
+    v.appendChild(document.createTextNode(String(giaTri)));
+    row.appendChild(v);
+    return row;
+  }
+
+  function nhomHang(hangs) {
+    var box = tao("div", "kid-sum-rows");
+    hangs.forEach(function (h) { if (h) box.appendChild(h); });
+    return box;
+  }
+
+  function veTamFC(d) {
+    var out = [];
+    var chuKy = d.baseMonth ? sThangDu(d.baseMonth) : "";
+
+    if (!d.baseMonth) {
+      out.push(tao("div", "kid-sum-note", "Chưa có chu kỳ dự báo nào."));
+    } else if (d.laThangNay) {
+      out.push(tao("div", "kid-sum-note", "Chu kỳ " + chuKy + " — dự báo " + d.months.length + " tháng."));
+    } else {
+      // Nói rõ đang xem chu kỳ nào. Hiện số của tháng trước mà không nói gì là
+      // để người đọc tưởng chu kỳ tháng này đã được nhập.
+      out.push(tao("div", "kid-sum-note kid-warn",
+        "Chưa có chu kỳ tháng này — đang hiện chu kỳ gần nhất (" + chuKy + ")."));
+    }
+
+    if (d.channels && d.channels.length) {
+      var wrap = tao("div", "kid-sum-scroll");
+      var tbl = tao("table", "kid-sum-tbl");
+
+      var cg = document.createElement("colgroup");
+      for (var ci = 0; ci < d.months.length + 1; ci++) cg.appendChild(document.createElement("col"));
+      var colTong = document.createElement("col");
+      colTong.className = "kid-sum-cot-tong";
+      cg.appendChild(colTong);
+      tbl.appendChild(cg);
+
+      var thead = document.createElement("thead");
+      var trh = document.createElement("tr");
+      trh.appendChild(tao("th", null, "Kênh"));
+      d.months.forEach(function (m) { trh.appendChild(tao("th", null, sThang(m))); });
+      trh.appendChild(tao("th", null, "Tổng " + d.months.length + "T"));
+      thead.appendChild(trh);
+      tbl.appendChild(thead);
+
+      var tbody = document.createElement("tbody");
+      function veDong(ten, qty, rev, cls) {
+        var tr = document.createElement("tr");
+        if (cls) tr.className = cls;
+        tr.appendChild(tao("td", null, ten));
+        var tq = 0, tr2 = 0;
+        for (var i = 0; i < d.months.length; i++) {
+          var td = tao("td", null, sSo(qty[i]));
+          td.appendChild(tao("em", null, sTien(rev[i])));
+          tr.appendChild(td);
+          tq += Number(qty[i] || 0);
+          tr2 += Number(rev[i] || 0);
+        }
+        var tdT = tao("td", null, sSo(tq));
+        tdT.appendChild(tao("em", null, sTien(tr2)));
+        tr.appendChild(tdT);
+        tbody.appendChild(tr);
+      }
+      d.channels.forEach(function (c) { veDong(c.ten || c.code, c.qty, c.rev); });
+      if (d.total && d.channels.length > 1) veDong("Tổng", d.total.qty, d.total.rev, "kid-sum-tong");
+      tbl.appendChild(tbody);
+
+      wrap.appendChild(tbl);
+      out.push(wrap);
+      var goiY = tao("div", "kid-sum-note kid-sum-goiy", "Bảng rộng hơn khung — cuộn ngang trong bảng để xem hết các tháng.");
+      goiY.hidden = true;                    // veSoLieu bật lên nếu đo thấy tràn
+      out.push(goiY);
+      out.push(tao("div", "kid-sum-note", "Dòng trên mỗi ô là số máy, dòng dưới là doanh thu dự báo (VND) theo giá bình quân của danh mục."));
+    } else if (d.baseMonth) {
+      out.push(tao("div", "kid-sum-note", "Chu kỳ này chưa có bản dự báo nào được chốt."));
+    }
+
+    if (d.pending && d.pending.length) {
+      var ds = tao("div", "kid-sum-plans");
+      d.pending.forEach(function (k) {
+        var chip = tao("div", "kid-sum-plan");
+        chip.appendChild(tao("b", null, k.ten || "(chưa rõ)"));
+        chip.appendChild(tao("span", null, "chờ duyệt" + (k.nguoiGui ? " · " + k.nguoiGui + " gửi" : "")));
+        ds.appendChild(chip);
+      });
+      out.push(ds);
+    } else {
+      out.push(tao("div", "kid-sum-note", "Không có kế hoạch nào chờ duyệt."));
+    }
+    return out;
+  }
+
+  function veTamOEM(d) {
+    var out = [];
+    var pct = d.planKpi ? Math.round((d.done / d.planKpi) * 100) : 0;
+    out.push(nhomHang([
+      hangSo("Doanh thu " + sThangOem(d.thangTruoc), sTien(d.dtThangTruoc)),
+      hangSo("Done MTD " + sThangOem(d.thangNay), sTien(d.done),
+        d.planKpi ? pct + "% KPI" : null),
+      hangSo("Plan update của sale", sTien(d.planUpdate)),
+      hangSo("Mục tiêu Plan KPI", sTien(d.planKpi),
+        d.soKhachCoKeHoach ? d.soKhachCoKeHoach + " khách" : null),
+      hangSo("Tổng công nợ hiện tại", sTien(d.congNo),
+        d.soKhachNo ? d.soKhachNo + " khách" : null, "strong")
+    ]));
+    if (d.soDongChoDuyet) {
+      out.push(tao("div", "kid-sum-note kid-warn",
+        d.soDongChoDuyet + " dòng kế hoạch đang chờ duyệt."));
+    }
+    if (d.soDongThieuThang) {
+      // Con số này là lời cảnh báo về DỮ LIỆU NGUỒN, không phải về app: tab
+      // Data có dòng không ghi tháng, nên chúng không vào được tháng nào.
+      out.push(tao("div", "kid-sum-note kid-warn",
+        d.soDongThieuThang + " dòng trên tab Data chưa có tháng nên không được tính vào tháng nào."));
+    }
+    out.push(tao("div", "kid-sum-note",
+      "Doanh thu tháng trước lấy từ tab Data (SAP). Done / Plan update / Plan KPI lấy từ tab Plan_Thang."));
+    return out;
+  }
+
+  function veTamEXPORT(d) {
+    function giaTri(g) { return sSo(g.soLo) + " lô · " + sUsd(g.fob); }
+    var out = [];
+    var hangs = [
+      hangSo("Tháng này (" + sThangDu(d.thangNay.thang) + ")", giaTri(d.thangNay.tong), null, "strong"),
+      hangSo("Tháng sau (" + sThangDu(d.thangSau.thang) + ")", giaTri(d.thangSau.tong), null, "strong"),
+      hangSo("Opened", giaTri(d.thangSau.opened), null, "sub"),
+      hangSo("Drafted + Targeted", giaTri(d.thangSau.nhap), null, "sub")
+    ];
+    // Chỉ hiện khi có: đây là phần dư (booked/shipped/closed/reviewed) để hai
+    // nhóm trên cộng lại đúng bằng tổng. Bằng 0 thì nó chỉ là một dòng nhiễu.
+    if (d.thangSau.khac.soLo) {
+      hangs.push(hangSo("Khác (booked, shipped, closed…)", giaTri(d.thangSau.khac), null, "sub"));
+    }
+    out.push(nhomHang(hangs));
+    if (d.soDonKhongCoThang) {
+      out.push(tao("div", "kid-sum-note kid-warn",
+        d.soDonKhongCoThang + " đơn chưa có ngày load nên không xếp được vào tháng nào."));
+    }
+    out.push(tao("div", "kid-sum-note",
+      "Một lô = một container đã tách; đơn chưa tách lô tính là một lô. Tiền là USD FOB."));
+    return out;
+  }
+
+  function nhanPhamVi(app, d) {
+    if (!d || !d.phamVi) return "Toàn bộ";
+    if (app.key === "FC") return "Kênh " + d.phamVi;
+    return "Của bạn";
+  }
+
+  function veSoLieu() {
+    var grid = el.sumGrid;
+    if (!grid) return;
+    grid.innerHTML = "";
+
+    var keys = KAROFI_APPS.map(function (a) { return a.key; })
+      .filter(function (k) { return soLieu[k]; });
+
+    if (!keys.length) {
+      // Chỉ còn một lý do vào được nhánh này: đã đăng nhập mà chưa được cấp
+      // app nào. Trường hợp chưa đăng nhập không tới đây vì cả khối đã bị ẩn
+      // (body.kid-anon .kid-sum), và dòng mời đăng nhập nằm ở kidAppsMeta.
+      grid.appendChild(tao("div", "kid-sum-note",
+        "Bạn chưa được cấp quyền vào app nào nên chưa có số liệu."));
+      if (el.sumWhen) el.sumWhen.textContent = "";
+      return;
+    }
+
+    var moiNhat = null;
+    keys.forEach(function (k) {
+      var app = KAROFI_APPS.filter(function (a) { return a.key === k; })[0];
+      var st = soLieu[k];
+      var panel = tao("div", "kid-sum-panel" + (k === "FC" ? " kid-sum-wide" : ""));
+
+      var head = tao("div", "kid-sum-title");
+      head.appendChild(tao("b", null, app.ten));
+      if (st.trangThai === "xong") {
+        head.appendChild(tao("span", "kid-sum-scope", nhanPhamVi(app, st.duLieu)));
+      }
+      panel.appendChild(head);
+
+      if (st.trangThai === "dang") {
+        panel.appendChild(tao("div", "kid-sum-note", "Đang lấy số liệu…"));
+      } else if (st.trangThai === "loi") {
+        // Nói app nào hỏng và hỏng vì sao. Một dòng "không tải được" chung cho
+        // cả khối thì không ai biết phải mở app nào ra xem.
+        panel.appendChild(tao("div", "kid-sum-note kid-bad", st.loi));
+      } else {
+        if (st.luc && (!moiNhat || st.luc > moiNhat)) moiNhat = st.luc;
+        try {
+          SUM_APP[k].ve(st.duLieu).forEach(function (n) { panel.appendChild(n); });
+        } catch (e) {
+          panel.appendChild(tao("div", "kid-sum-note kid-bad",
+            "Số liệu về nhưng không hiện được: " + e.message));
+        }
+      }
+      grid.appendChild(panel);
+    });
+
+    // Đo SAU khi đã gắn vào trang: một node còn rời khỏi DOM có scrollWidth
+    // bằng clientWidth, nên đo lúc dựng thì lúc nào cũng ra "không tràn".
+    var wrap = grid.querySelector(".kid-sum-scroll");
+    if (wrap) {
+      var tran = wrap.scrollWidth > wrap.clientWidth + 2;
+      wrap.classList.toggle("kid-co-cuon", tran);
+      var goiY = wrap.parentNode.querySelector(".kid-sum-goiy");
+      if (goiY) goiY.hidden = !tran;
+    }
+
+    if (el.sumWhen) {
+      el.sumWhen.textContent = moiNhat ? "Cập nhật " + sGio(moiNhat) : "";
+    }
   }
 
   // ---------------------------------------------------------------
@@ -2438,7 +2973,7 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
       el.pin.value = "";
       setMsg("", "");
       renderAll();
-      loadSummary();
+      taiSoLieu();
       // Đến đây từ một app (link có ?next=/OEM/) thì quay lại đúng chỗ đó.
       // Chỉ nhận đường dẫn nội bộ bắt đầu bằng một dấu "/" — không nhận
       // "//host" hay URL tuyệt đối, tránh bị lợi dụng để chuyển ra ngoài.
@@ -2483,6 +3018,9 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
       account: $("kidAccount"),
       appGrid: $("kidAppGrid"),
       appsMeta: $("kidAppsMeta"),
+      sumGrid: $("kidSumGrid"),
+      sumWhen: $("kidSumWhen"),
+      sumReload: $("kidSumReload"),
       gate: $("kidGate"),
       user: $("kidUser"),
       pin: $("kidPin"),
@@ -2500,6 +3038,7 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     if (!el.appGrid) return;
 
     el.submit.addEventListener("click", doLogin);
+    if (el.sumReload) el.sumReload.addEventListener("click", taiSoLieu);
     el.pinSubmit.addEventListener("click", doChangePin);
     el.cancel.addEventListener("click", closeModal);
     el.backdrop.addEventListener("click", function (e) {
@@ -2540,7 +3079,7 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
 
     renderFallback();
     renderAll();
-    loadSummary();
+    taiSoLieu();
   }
 
   if (document.readyState === "loading") {
