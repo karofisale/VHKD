@@ -615,6 +615,38 @@
   .kid-sum-note.kid-bad { color: var(--critical); }
   .kid-sum-note.kid-warn { color: var(--warning); }
 
+  /* Nhịp tim của các việc chạy tự động. Tách khỏi phần số bằng một đường kẻ vì
+     nó trả lời một câu hỏi khác hẳn: không phải "số là bao nhiêu" mà "số này
+     cũ bao lâu rồi". Xem gas/NhipTim.gs của ba app. */
+  .kid-nhip {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .kid-nhip-h {
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .kid-nhip-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 2px 8px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--ink-faint);
+  }
+  .kid-nhip-row b { font-weight: 500; flex: 1 1 auto; min-width: 0; }
+  .kid-nhip-row span { margin-left: auto; white-space: nowrap; }
+  .kid-nhip-row.kid-warn, .kid-nhip-row.kid-warn b { color: var(--warning); }
+  .kid-nhip-row.kid-bad, .kid-nhip-row.kid-bad b { color: var(--critical); }
+
   /* Hàng nhãn — số. Nhãn co được, số thì không: `flex: 1 1 auto` + min-width 0
      ở nhãn giữ cho số dài không bị cắt hay đẩy tràn ra ngoài tấm. */
   .kid-sum-rows { display: flex; flex-direction: column; gap: 1px; }
@@ -2760,6 +2792,28 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
   }
 
+  /**
+   * Tuổi của một lần chạy, tính bằng giờ, viết ra cho người đọc.
+   *
+   * Đổi đơn vị theo độ lớn có chủ ý: "0,3 giờ" không nói lên gì, "18 phút" thì
+   * có; còn "742 giờ" thì phải nhẩm mới biết là một tháng. Ngưỡng 48 giờ chứ
+   * không phải 24 vì "36 giờ" vẫn đọc nhanh hơn "2 ngày" khi việc chạy hằng ngày.
+   */
+  function sTuoi(gio) {
+    if (gio === null || gio === undefined) return "—";
+    if (gio < 1) return Math.max(1, Math.round(gio * 60)) + " phút";
+    if (gio < 48) return Math.round(gio) + " giờ";
+    return Math.round(gio / 24) + " ngày";
+  }
+
+  /** Mốc tuyệt đối 'HH:mm dd/MM' — dùng làm tooltip cho con số tuổi tương đối. */
+  function sLuc(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return sGio(d) + " " + ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2);
+  }
+
   // ----- dựng DOM -----
 
   function tao(tag, cls, chu) {
@@ -2964,6 +3018,80 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     return "Của bạn";
   }
 
+  /**
+   * Nhịp tim: những việc chạy tự động đổ số vào file của app này lần cuối lúc
+   * nào, và việc nào đã trễ nhịp.
+   *
+   * VÌ SAO LIỆT KÊ TỪNG VIỆC chứ không in MỘT dòng "số liệu tính đến ...":
+   * trong một thẻ có nhiều con số đến từ nhiều nguồn khác nhau — thẻ OEM có
+   * doanh thu (đợt đổ từ SAP) và công nợ (đợt khác, chạy tách nhau) — nên một
+   * mốc thời gian chung sẽ nói công nợ tươi chỉ vì doanh thu vừa chạy. Và ở
+   * thẻ FC thì các con số kế hoạch do người nhập, không do việc tự động nào
+   * sinh ra cả; gán cho chúng một mốc "cập nhật" là bịa.
+   *
+   * Ngưỡng ôi (`han_gio`) nằm trên Sheet, không nằm ở đây: thêm một việc mới
+   * hay đổi nhịp mong muốn thì không phải deploy lại cổng.
+   */
+  function veNhipTim(d) {
+    var ds = (d && d.nhipTim) || [];
+    var box = tao("div", "kid-nhip");
+
+    if (!ds.length) {
+      // Không có dòng nào nghĩa là chưa việc tự động nào từng báo nhịp về file
+      // này. Nói ra, nhẹ thôi: nó tự biến mất ở lần chạy đầu tiên, và nếu nó
+      // không biến mất thì đó chính là điều cần biết.
+      box.appendChild(tao("div", "kid-nhip-h", "Việc tự động"));
+      box.appendChild(tao("div", "kid-nhip-row", "Chưa việc nào báo nhịp."));
+      return box;
+    }
+
+    // Việc có vấn đề lên trước. Trong một thẻ chỉ cao vài dòng, thứ cần xử lý
+    // mà nằm dưới cùng thì bằng không có.
+    var uuTien = { loi: 0, oi: 1, "chua-chay": 2, ok: 3, "khong-han": 3 };
+    var sap = ds.slice().sort(function (a, b) {
+      var ka = a.trangThai === "loi" ? "loi" : a.tinhTrang;
+      var kb = b.trangThai === "loi" ? "loi" : b.tinhTrang;
+      var x = (uuTien[ka] === undefined ? 3 : uuTien[ka]) -
+              (uuTien[kb] === undefined ? 3 : uuTien[kb]);
+      return x !== 0 ? x : String(a.job).localeCompare(String(b.job));
+    });
+
+    box.appendChild(tao("div", "kid-nhip-h", "Việc tự động"));
+
+    sap.forEach(function (n) {
+      var kieu = "";
+      var phai;
+
+      if (n.trangThai === "loi") {
+        // Chạy xong nhưng hỏng — khác hẳn với không chạy. Lần chạy hỏng vẫn
+        // cập nhật mốc thời gian, nên chỉ nhìn tuổi sẽ tưởng mọi thứ ổn.
+        kieu = "kid-bad";
+        phai = "lỗi · " + sTuoi(n.tuoiGio) + " trước";
+      } else if (n.tinhTrang === "chua-chay") {
+        kieu = "kid-warn";
+        phai = "chưa chạy lần nào";
+      } else if (n.tinhTrang === "oi") {
+        kieu = "kid-warn";
+        phai = sTuoi(n.tuoiGio) + " trước · quá hạn " + sTuoi(n.hanGio);
+      } else {
+        phai = sTuoi(n.tuoiGio) + " trước";
+      }
+
+      var row = tao("div", "kid-nhip-row" + (kieu ? " " + kieu : ""));
+      row.appendChild(tao("b", null, n.moTa || n.job));
+      row.appendChild(tao("span", null, phai));
+      // Tuổi tương đối dễ đọc, mốc tuyệt đối mới tra được — để mốc ở tooltip.
+      var luc = sLuc(n.lanCuoi);
+      row.title = (luc ? "Lần cuối " + luc : "Chưa có lần chạy nào") +
+                  (n.soDong || n.soDong === 0 ? " · " + n.soDong + " dòng" : "") +
+                  (n.ghiChu ? "\n" + n.ghiChu : "") +
+                  "\n(" + n.job + ")";
+      box.appendChild(row);
+    });
+
+    return box;
+  }
+
   function veSoLieu() {
     var grid = el.sumGrid;
     if (!grid) return;
@@ -3017,6 +3145,14 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
           panel.appendChild(tao("div", "kid-sum-note kid-bad",
             "Số liệu về nhưng không hiện được: " + e.message));
         }
+        // Nhịp tim dựng RIÊNG, ngoài khối try ở trên: nó là thứ báo cho biết
+        // số đang cũ, nên nó phải sống sót được cả khi phần vẽ số kia hỏng.
+        try {
+          panel.appendChild(veNhipTim(st.duLieu));
+        } catch (e2) {
+          panel.appendChild(tao("div", "kid-sum-note kid-bad",
+            "Không đọc được nhịp tim: " + e2.message));
+        }
       }
       grid.appendChild(panel);
     });
@@ -3032,7 +3168,19 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     }
 
     if (el.sumWhen) {
-      el.sumWhen.textContent = moiNhat ? "Cập nhật " + sGio(moiNhat) : "";
+      // "Tải lúc" chứ KHÔNG phải "Cập nhật".
+      //
+      // Mốc này là lúc TRÌNH DUYỆT gọi xong ba backend — nó luôn là vài giây
+      // trước, kể cả khi con số bên dưới đã cũ ba tuần. Chữ "Cập nhật" ở đây
+      // (bản trước) đọc thành "số liệu mới tới thời điểm này", đúng cái hiểu
+      // sai mà khối nhịp tim sinh ra để chữa. Độ tươi thật của từng nguồn nằm
+      // ở khối "Việc tự động" trong mỗi thẻ — xem veNhipTim.
+      el.sumWhen.textContent = moiNhat ? "Tải lúc " + sGio(moiNhat) : "";
+      el.sumWhen.title = moiNhat
+        ? "Thời điểm cổng gọi xong ba backend, không phải thời điểm dữ liệu " +
+          "được cập nhật. Độ tươi của từng nguồn xem ở mục “Việc tự động” " +
+          "trong mỗi thẻ."
+        : "";
     }
   }
 
