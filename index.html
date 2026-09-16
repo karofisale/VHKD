@@ -2345,6 +2345,13 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     try {
       if (window.indexedDB && indexedDB.deleteDatabase) indexedDB.deleteDatabase(KAROFI_OEM_CACHE_DB);
     } catch (e) {}
+    // Dọn cả cache "Số liệu tổng quan" (docCacheSoLieu/ghiCacheSoLieu, key
+    // kidSum_*) — máy dùng chung mà không dọn thì người đăng nhập SAU trên
+    // cùng tab này thấy thoáng qua số liệu của người TRƯỚC trước khi lượt gọi
+    // thật kịp thay vào.
+    try {
+      KAROFI_APPS.forEach(function (app) { sessionStorage.removeItem('kidSum_' + app.key); });
+    } catch (e) {}
   }
 
   // ---------------------------------------------------------------
@@ -2737,12 +2744,14 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
   /**
    * Gọi backend của MỘT app và cập nhật soLieu[app.key] theo kết quả. Tách
    * riêng khỏi taiSoLieu() để taiLaiMotApp() (nút "Thử lại" trong panel lỗi)
-   * dùng lại đúng logic này — soLieu[app.key] PHẢI đã được đặt "dang" trước
-   * khi gọi hàm này (taiSoLieu() đặt hàng loạt, taiLaiMotApp() đặt riêng).
+   * dùng lại đúng logic này. Gọi được cả khi soLieu[app.key] đang "xong" từ
+   * cache (xem docCacheSoLieu) — taiSoLieu() vẫn gọi hàm này NGẦM để thay
+   * bằng số thật, không chỉ khi đang "dang".
    */
   function goiVaCapNhat(app) {
     goiApp(app, 0).then(function (du) {
       soLieu[app.key] = { trangThai: "xong", duLieu: du, luc: new Date() };
+      ghiCacheSoLieu(app.key, du);
       veSoLieu();
     }).catch(function (err) {
       // Token bị thu hồi / hết hạn: đưa cả cổng về trạng thái chưa đăng
@@ -2760,6 +2769,26 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     });
   }
 
+  // Cache ngắn hạn phía trình duyệt (2026-09): OEM đã cache 10 phút phía
+  // SERVER cho api_portalStats, nhưng cổng vẫn round-trip mạng đầy đủ mỗi lần
+  // TẢI LẠI TRANG (đóng tab rồi mở lại, F5) dù chắc chắn dữ liệu chưa đổi
+  // trong khoảng đó. sessionStorage sống trong đúng tab này, mất khi đóng tab
+  // — không phải nơi lưu lâu dài, chỉ để lần tải lại NHANH SAU không phải chờ
+  // lại từ đầu.
+  var SUM_CACHE_TTL_MS = 150000; // 2,5 phút
+  function docCacheSoLieu(appKey) {
+    try {
+      var raw = sessionStorage.getItem('kidSum_' + appKey);
+      if (!raw) return null;
+      var c = JSON.parse(raw);
+      if (!c || Date.now() - c.at > SUM_CACHE_TTL_MS) return null;
+      return c;
+    } catch (e) { return null; }
+  }
+  function ghiCacheSoLieu(appKey, duLieu) {
+    try { sessionStorage.setItem('kidSum_' + appKey, JSON.stringify({ duLieu: duLieu, at: Date.now() })); } catch (e) {}
+  }
+
   function taiSoLieu() {
     if (!el.sumGrid) return;
     var s = readSession();
@@ -2774,7 +2803,16 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     });
 
     soLieu = {};
-    canGoi.forEach(function (app) { soLieu[app.key] = { trangThai: "dang", batDau: Date.now() }; });
+    canGoi.forEach(function (app) {
+      // Còn cache mới thì hiện NGAY (không qua "dang"), đỡ phải nhìn dòng chữ
+      // "Đang lấy số liệu…" mỗi lần mở lại tab dù chắc chắn số chưa kịp đổi.
+      // Vẫn gọi goiVaCapNhat() ngầm để thay bằng số THẬT khi có — cache chỉ
+      // là bản tạm cho có ngay, không thay cho một lượt gọi thật.
+      var cache = docCacheSoLieu(app.key);
+      soLieu[app.key] = cache
+        ? { trangThai: "xong", duLieu: cache.duLieu, luc: new Date(cache.at) }
+        : { trangThai: "dang", batDau: Date.now() };
+    });
     veSoLieu();
     batDongHoDangTai();
 
