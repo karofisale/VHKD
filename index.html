@@ -615,6 +615,23 @@
   .kid-sum-note.kid-bad { color: var(--critical); }
   .kid-sum-note.kid-warn { color: var(--warning); }
 
+  /* Banner cảnh báo phiên sắp hết hạn (2026-09) — trước đây token hết hạn
+     giữa chừng thì người dùng chỉ biết khi một request đang chạy dở bị
+     UNAUTHORIZED, mất luôn việc đang làm ở app đang mở, không có cảnh báo
+     nào trước đó. */
+  .kid-het-han-banner {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+    z-index: 200; max-width: 92vw; display: flex; align-items: center; gap: 10px;
+    background: var(--card); border: 1px solid var(--warning); color: var(--ink);
+    border-radius: 10px; padding: 10px 14px; font-size: 13px; line-height: 1.4;
+    box-shadow: 0 6px 20px rgba(0,0,0,.15);
+  }
+  .kid-het-han-dong {
+    flex-shrink: 0; border: none; background: none; color: var(--ink-faint);
+    font-size: 15px; line-height: 1; cursor: pointer; padding: 2px 4px;
+  }
+  .kid-het-han-dong:hover { color: var(--ink); }
+
   /* Khung xương giữ chỗ khi đang tải (2026-09). Không có nó, panel chỉ cao
      bằng một dòng chữ lúc "dang" rồi phình đột ngột khi bảng/nhiều dòng số
      về ở trạng thái "xong" — layout nhảy, mắt phải đuổi theo. min-height ước
@@ -2801,6 +2818,49 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
   }
 
   /**
+   * Cảnh báo phiên sắp hết hạn (2026-09). Trước đây token hết hạn giữa chừng
+   * chỉ lộ ra khi MỘT request đang chạy dở bị UNAUTHORIZED — cổng đăng xuất
+   * ngay, mất việc đang làm ở app đang mở mà không có dấu hiệu báo trước.
+   *
+   * Kiểm mỗi phút thay vì đặt 1 hẹn giờ đúng lúc còn 5 phút: session có thể
+   * được ghi lại (đăng nhập lại ở tab khác cùng localStorage) bất kỳ lúc nào,
+   * nên phải tính lại "còn bao lâu" từ session HIỆN TẠI mỗi lần kiểm, không
+   * tính một lần rồi tin mãi.
+   */
+  var CANH_BAO_HET_HAN_TRUOC_MS = 5 * 60 * 1000;
+  var _daCanhBaoHetHanChoToken = null;
+  function veCanhBaoHetHan() {
+    var cu = document.querySelector('.kid-het-han-banner');
+    if (cu) cu.remove();
+    var b = document.createElement('div');
+    b.className = 'kid-het-han-banner';
+    b.setAttribute('role', 'alert');
+    var chu = document.createElement('span');
+    chu.textContent = 'Phiên đăng nhập sắp hết hạn trong ít phút — lưu việc đang làm ở các app rồi đăng nhập lại.';
+    var dong = document.createElement('button');
+    dong.type = 'button'; dong.className = 'kid-het-han-dong'; dong.textContent = '✕';
+    dong.setAttribute('aria-label', 'Đóng cảnh báo');
+    dong.addEventListener('click', function () { b.remove(); });
+    b.appendChild(chu);
+    b.appendChild(dong);
+    document.body.appendChild(b);
+  }
+  function batCanhBaoHetHan() {
+    setInterval(function () {
+      var s = readSession();
+      if (!s || !s.expiresAt) { _daCanhBaoHetHanChoToken = null; return; }
+      // Đổi phiên (đăng nhập lại) thì token mới — cảnh báo lại được cho token
+      // mới đó khi tới lượt, không bị nhớ nhầm là "đã cảnh báo rồi".
+      if (_daCanhBaoHetHanChoToken && _daCanhBaoHetHanChoToken !== s.token) _daCanhBaoHetHanChoToken = null;
+      var conLai = new Date(s.expiresAt).getTime() - Date.now();
+      if (conLai <= 0 || conLai > CANH_BAO_HET_HAN_TRUOC_MS) return;
+      if (_daCanhBaoHetHanChoToken === s.token) return;
+      _daCanhBaoHetHanChoToken = s.token;
+      veCanhBaoHetHan();
+    }, 60 * 1000);
+  }
+
+  /**
    * SUM_TIMEOUT_MS (55s) + 1 lần thử lại là CÓ CHỦ ĐÍCH, không phải quá dài
    * do sơ suất: đo thật trên chính URL Apps Script này cho thấy container
    * "ngủ" có thể mất tới 84 GIÂY để hồi đáp (xem commit FC App "Goi Apps
@@ -3706,6 +3766,7 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     // không lo quên gọi lại hẹn giờ ở nhánh đăng nhập, và không tạo hai hẹn
     // giờ chồng nhau nếu người dùng đăng nhập/đăng xuất nhiều lần trong phiên.
     batTuDongLamMoi();
+    batCanhBaoHetHan();
 
     // Chưa đăng nhập nghĩa là cổng đăng nhập đang hiện giữa trang và việc kế
     // tiếp gần như chắc chắn là gõ PIN. Đã đăng nhập thì KHÔNG hâm: token còn
