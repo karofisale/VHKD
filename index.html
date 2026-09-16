@@ -2717,8 +2717,9 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     });
 
     soLieu = {};
-    canGoi.forEach(function (app) { soLieu[app.key] = { trangThai: "dang" }; });
+    canGoi.forEach(function (app) { soLieu[app.key] = { trangThai: "dang", batDau: Date.now() }; });
     veSoLieu();
+    batDongHoDangTai();
 
     canGoi.forEach(function (app) {
       goiApp(app, 0).then(function (du) {
@@ -2739,6 +2740,28 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
         veSoLieu();
       });
     });
+  }
+
+  /**
+   * SUM_TIMEOUT_MS (55s) + 1 lần thử lại là CÓ CHỦ ĐÍCH, không phải quá dài
+   * do sơ suất: đo thật trên chính URL Apps Script này cho thấy container
+   * "ngủ" có thể mất tới 84 GIÂY để hồi đáp (xem commit FC App "Goi Apps
+   * Script phai thu lai: cold start mat toi 84 giay"). Hạ ngưỡng xuống thấp
+   * hơn mức đó sẽ làm cổng BÁO LỖI SAI cho một app thực ra vẫn đang khởi
+   * động bình thường — tệ hơn hẳn việc chờ lâu.
+   *
+   * Cái thật sự thiếu không phải ngưỡng, mà là NGƯỜI DÙNG KHÔNG BIẾT vì sao
+   * phải chờ lâu vậy. Đồng hồ này chỉ vẽ lại panel đang "dang" mỗi giây để
+   * hiện số giây đã chờ, và sau 10s thì nói rõ lý do — không đổi ngưỡng gọi.
+   */
+  var dongHoDangTaiId = null;
+  function batDongHoDangTai() {
+    if (dongHoDangTaiId) return;
+    dongHoDangTaiId = setInterval(function () {
+      var conDang = Object.keys(soLieu).some(function (k) { return soLieu[k].trangThai === "dang"; });
+      if (!conDang) { clearInterval(dongHoDangTaiId); dongHoDangTaiId = null; return; }
+      veSoLieu();
+    }, 1000);
   }
 
   // ----- định dạng số -----
@@ -3132,7 +3155,12 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
       panel.appendChild(head);
 
       if (st.trangThai === "dang") {
-        panel.appendChild(tao("div", "kid-sum-note", "Đang lấy số liệu…"));
+        var giay = st.batDau ? Math.floor((Date.now() - st.batDau) / 1000) : 0;
+        var chu = "Đang lấy số liệu… (" + giay + "s)";
+        // Sau 10s mới nói tới chuyện "khởi động lại" — dưới ngưỡng đó gần như
+        // luôn là mạng bình thường, nói sớm chỉ gây lo không cần thiết.
+        if (giay >= 10) chu += " — có thể mất tới 1 phút nếu dịch vụ mới khởi động sau một thời gian không dùng.";
+        panel.appendChild(tao("div", "kid-sum-note", chu));
       } else if (st.trangThai === "loi") {
         // Nói app nào hỏng và hỏng vì sao. Một dòng "không tải được" chung cho
         // cả khối thì không ai biết phải mở app nào ra xem.
