@@ -615,6 +615,20 @@
   .kid-sum-note.kid-bad { color: var(--critical); }
   .kid-sum-note.kid-warn { color: var(--warning); }
 
+  /* Khung xương giữ chỗ khi đang tải (2026-09). Không có nó, panel chỉ cao
+     bằng một dòng chữ lúc "dang" rồi phình đột ngột khi bảng/nhiều dòng số
+     về ở trạng thái "xong" — layout nhảy, mắt phải đuổi theo. min-height ước
+     theo panel đầy đủ (vài dòng số + khối nhịp tim), không khớp tuyệt đối
+     từng app vì lúc đang tải chưa biết app nào có bảng dài hơn — chỉ cần đủ
+     gần để bớt nhảy, không cần chính xác tuyệt đối. */
+  .kid-sum-skel { display: flex; flex-direction: column; gap: 8px; min-height: 96px; padding-top: 2px; }
+  .kid-sum-bone { height: 11px; border-radius: 5px; background: var(--line-soft); }
+
+  /* Nút "Thử lại" riêng trong panel lỗi: align-self flex-start vì panel là
+     flex column (mặc định stretch) — nút full-width trông sai, nút này chỉ
+     cần rộng bằng nội dung của nó. */
+  .kid-sum-retry { align-self: flex-start; }
+
   /* Nhịp tim của các việc chạy tự động. Tách khỏi phần số bằng một đường kẻ vì
      nó trả lời một câu hỏi khác hẳn: không phải "số là bao nhiêu" mà "số này
      cũ bao lâu rồi". Xem gas/NhipTim.gs của ba app. */
@@ -2703,6 +2717,32 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     });
   }
 
+  /**
+   * Gọi backend của MỘT app và cập nhật soLieu[app.key] theo kết quả. Tách
+   * riêng khỏi taiSoLieu() để taiLaiMotApp() (nút "Thử lại" trong panel lỗi)
+   * dùng lại đúng logic này — soLieu[app.key] PHẢI đã được đặt "dang" trước
+   * khi gọi hàm này (taiSoLieu() đặt hàng loạt, taiLaiMotApp() đặt riêng).
+   */
+  function goiVaCapNhat(app) {
+    goiApp(app, 0).then(function (du) {
+      soLieu[app.key] = { trangThai: "xong", duLieu: du, luc: new Date() };
+      veSoLieu();
+    }).catch(function (err) {
+      // Token bị thu hồi / hết hạn: đưa cả cổng về trạng thái chưa đăng
+      // nhập, và dọn cả phiên riêng của ba app — để nguyên thì việc thu hồi
+      // không có tác dụng gì trong 6 giờ tiếp theo.
+      if (/UNAUTHORIZED|hết hạn/i.test(err.message)) {
+        clearAllAppSessions();
+        xoaSoLieu();
+        if (window.KID_VE_TONG_QUAN) window.KID_VE_TONG_QUAN();
+        renderAll();
+        return;
+      }
+      soLieu[app.key] = { trangThai: "loi", loi: err.message };
+      veSoLieu();
+    });
+  }
+
   function taiSoLieu() {
     if (!el.sumGrid) return;
     var s = readSession();
@@ -2721,25 +2761,43 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     veSoLieu();
     batDongHoDangTai();
 
-    canGoi.forEach(function (app) {
-      goiApp(app, 0).then(function (du) {
-        soLieu[app.key] = { trangThai: "xong", duLieu: du, luc: new Date() };
-        veSoLieu();
-      }).catch(function (err) {
-        // Token bị thu hồi / hết hạn: đưa cả cổng về trạng thái chưa đăng
-        // nhập, và dọn cả phiên riêng của ba app — để nguyên thì việc thu hồi
-        // không có tác dụng gì trong 6 giờ tiếp theo.
-        if (/UNAUTHORIZED|hết hạn/i.test(err.message)) {
-          clearAllAppSessions();
-          xoaSoLieu();
-          if (window.KID_VE_TONG_QUAN) window.KID_VE_TONG_QUAN();
-          renderAll();
-          return;
-        }
-        soLieu[app.key] = { trangThai: "loi", loi: err.message };
-        veSoLieu();
-      });
-    });
+    canGoi.forEach(function (app) { goiVaCapNhat(app); });
+  }
+
+  /**
+   * Nút "Thử lại" riêng trong panel lỗi (2026-09): chỉ gọi lại ĐÚNG app đang
+   * lỗi, không kéo theo cả ba backend như nút "Tải lại" ở đầu khối — một app
+   * cold-start/lỗi mạng thì hai app kia vẫn có số liệu tốt, gọi lại cả ba vừa
+   * phí vừa đánh thức container đang ngủ của app không liên quan.
+   */
+  function taiLaiMotApp(app) {
+    soLieu[app.key] = { trangThai: "dang", batDau: Date.now() };
+    veSoLieu();
+    batDongHoDangTai();
+    goiVaCapNhat(app);
+  }
+
+  /**
+   * Tự động làm mới định kỳ (2026-09). CHỈ gọi khi tab đang hiển thị —
+   * document.visibilityState !== 'visible' nghĩa là tab đang ẩn/nền, gọi API
+   * lúc đó vừa tốn tài nguyên vô ích vừa có thể đánh thức cold-start backend
+   * không ai đang xem kết quả. Không dùng setInterval gọi thẳng taiSoLieu:
+   * phải kiểm tra visibility NGAY LÚC HẸN GIỜ NỔ RA, không phải lúc đặt hẹn
+   * giờ — tab có thể đã bị ẩn từ trước đó rất lâu.
+   *
+   * Bỏ qua khi đang có app nào ở trạng thái "dang": một lượt tải trước (thủ
+   * công hoặc cold-start dài) có thể chưa xong khi mốc 10 phút tới, gọi
+   * chồng thêm một lượt nữa chỉ tổ tăng tải backend vô ích.
+   */
+  var TU_DONG_LAM_MOI_MS = 10 * 60 * 1000;
+  function batTuDongLamMoi() {
+    setInterval(function () {
+      if (document.visibilityState !== "visible") return;
+      if (!readSession()) return;
+      var conDang = Object.keys(soLieu).some(function (k) { return soLieu[k].trangThai === "dang"; });
+      if (conDang) return;
+      taiSoLieu();
+    }, TU_DONG_LAM_MOI_MS);
   }
 
   /**
@@ -3161,10 +3219,26 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
         // luôn là mạng bình thường, nói sớm chỉ gây lo không cần thiết.
         if (giay >= 10) chu += " — có thể mất tới 1 phút nếu dịch vụ mới khởi động sau một thời gian không dùng.";
         panel.appendChild(tao("div", "kid-sum-note", chu));
+        // Khung xương giữ chỗ (.kid-sum-skel, xem CSS): không có nó, panel chỉ
+        // cao bằng dòng chữ trên rồi phình đột ngột khi số/bảng về ở trạng
+        // thái "xong" — content jump, nhất là panel có bảng nhiều dòng.
+        var skel = tao("div", "kid-sum-skel");
+        [86, 60, 72, 48].forEach(function (pt) {
+          var bone = tao("div", "kid-sum-bone");
+          bone.style.width = pt + "%";
+          skel.appendChild(bone);
+        });
+        panel.appendChild(skel);
       } else if (st.trangThai === "loi") {
         // Nói app nào hỏng và hỏng vì sao. Một dòng "không tải được" chung cho
         // cả khối thì không ai biết phải mở app nào ra xem.
         panel.appendChild(tao("div", "kid-sum-note kid-bad", st.loi));
+        var retry = tao("button", "kid-mini kid-sum-retry", "Thử lại");
+        retry.type = "button";
+        // Đóng app vào closure của forEach này — bấm nút chỉ gọi lại đúng app
+        // này (xem taiLaiMotApp), không đụng tới hai app còn lại.
+        retry.addEventListener("click", function () { taiLaiMotApp(app); });
+        panel.appendChild(retry);
       } else {
         if (st.luc && (!moiNhat || st.luc > moiNhat)) moiNhat = st.luc;
         try {
@@ -3626,6 +3700,12 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     renderFallback();
     renderAll();
     taiSoLieu();
+    // Đặt hẹn giờ MỘT LẦN ở init, không phải mỗi lần đăng nhập: bản thân
+    // taiSoLieu() bên trong đã tự kiểm tra session (readSession()), gọi lúc
+    // chưa đăng nhập chỉ xoá số liệu rỗng thành rỗng — vô hại. Đặt ở init thì
+    // không lo quên gọi lại hẹn giờ ở nhánh đăng nhập, và không tạo hai hẹn
+    // giờ chồng nhau nếu người dùng đăng nhập/đăng xuất nhiều lần trong phiên.
+    batTuDongLamMoi();
 
     // Chưa đăng nhập nghĩa là cổng đăng nhập đang hiện giữa trang và việc kế
     // tiếp gần như chắc chắn là gõ PIN. Đã đăng nhập thì KHÔNG hâm: token còn
