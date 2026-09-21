@@ -908,6 +908,11 @@
   .kid-msg { font-size: 12.5px; line-height: 1.5; margin: 8px 0 0; min-height: 1em; }
   .kid-msg.kid-bad { color: var(--critical); }
   .kid-msg.kid-good { color: var(--success); }
+  /* Việc làm được MỘT NỬA — không phải lỗi, cũng không phải thành công. Cần
+     một màu riêng: tô xanh là nói dối, tô đỏ là người dùng tưởng phải làm lại
+     trong khi phần chính đã xong. Đậm hơn hai kiểu kia vì đây là dòng duy nhất
+     người dùng buộc phải đọc hết thay vì liếc qua. */
+  .kid-msg.kid-warn { color: var(--warning); font-weight: 600; }
   .kid-note { font-size: 12px; color: var(--ink-faint); margin: 6px 0 0; line-height: 1.5; }
 
   /* ===================================================================
@@ -3698,9 +3703,25 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
 
     el.pinSubmit.disabled = true;
     el.pinSubmit.textContent = "Đang xử lý…";
-    callApi("changePin", [s.token, oldP, n1]).then(function () {
+    callApi("changePin", [s.token, oldP, n1]).then(function (kq) {
       el.pinSubmit.disabled = false;
       el.pinSubmit.textContent = "Đổi PIN";
+
+      // Backend trả về app nào KHÔNG lan toả được PIN mới sang bảng Users của
+      // nó. Bản trước bỏ qua hẳn giá trị này, nên khi việc lan toả hỏng thì
+      // màn hình vẫn báo "Đã đổi PIN" — đúng kiểu hỏng mà cả dự án này phòng:
+      // nói thành công cho một việc chỉ làm được một nửa.
+      //
+      // Hậu quả cụ thể: đăng nhập qua cổng dùng PIN MỚI, còn lối dự phòng
+      // ?direct=1 của app đó vẫn ăn PIN CŨ. Người dùng không có cách nào tự
+      // biết cho tới hôm cổng chết và họ phải dùng lối dự phòng.
+      var hong = (kq && kq.khongDongBo) || [];
+      if (hong.length) {
+        setPinMsg("Đã đổi PIN cho cổng. NHƯNG chưa đồng bộ được sang: "
+          + hong.join("; ") + ". Lối vào thẳng (?direct=1) của app đó còn PIN cũ — "
+          + "báo quản trị hệ thống.", "warn");
+        return;                      // không tự đóng: người dùng cần đọc hết
+      }
       setPinMsg("Đã đổi PIN. Lần sau đăng nhập bằng PIN mới.", "good");
       setTimeout(closeModal, 1400);
     }).catch(function (err) {
