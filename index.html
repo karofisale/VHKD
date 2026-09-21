@@ -2234,13 +2234,55 @@
   "use strict";
 
   /* --------------------------------------------------------------
-     DÁN URL Ở ĐÂY sau khi deploy dự án Apps Script "Karofi ID"
-     (Deploy → New deployment → Web app → Execute as Me,
-      Who has access: Anyone → copy URL kết thúc bằng /exec).
-     Để trống thì trang vẫn chạy bình thường như trước, các thẻ app
-     là link thường và không có đăng nhập chung.
+     HAI ĐỊA CHỈ DỊCH VỤ ĐĂNG NHẬP, cùng một hợp đồng {fn, args}.
+
+     Bước 1 của kế hoạch Supabase (xem Karofi-ID/supabase/README.md):
+     Edge Function đã dựng xong và đo được nhanh hơn ~15 lần, nhưng
+     CHƯA ai đăng nhập thật qua nó. Nên mặc định vẫn là Apps Script,
+     và ai muốn thử thì tự bật cho riêng mình.
+
+       ?kid=edge   dùng Edge Function (Supabase)
+       ?kid=gas    quay về Apps Script
+       ?kid=       xoá lựa chọn, về mặc định
+
+     Lựa chọn nhớ trong localStorage nên không phải gõ lại mỗi lần,
+     và chỉ ảnh hưởng đúng trình duyệt đó — người khác không thấy gì.
+
+     Đổi qua lại KHÔNG làm mất phiên đăng nhập: token HMAC tự chứa,
+     hai bên ký bằng cùng một KAROFI_ID_SECRET nên token của bên này
+     bên kia kiểm được. Đây cũng chính là lý do đường lùi rẻ.
+
+     KHI CẮT LUỒNG THẬT: đổi dòng `var KID_MAC_DINH` thành "edge".
+     Quay lui cũng chỉ là đổi lại dòng đó.
      -------------------------------------------------------------- */
-  var KAROFI_ID_API = "https://script.google.com/macros/s/AKfycbwKj1-OX7ChQMwRC6YghriZGUMseixWc8VWwOpfgXEE8Aiqpv3XUqqumewcGWppSIWQgQ/exec";
+  var KID_GAS  = "https://script.google.com/macros/s/AKfycbwKj1-OX7ChQMwRC6YghriZGUMseixWc8VWwOpfgXEE8Aiqpv3XUqqumewcGWppSIWQgQ/exec";
+  var KID_EDGE = "https://zzbnxyvjpiuhxauagbgh.supabase.co/functions/v1/karofi-id";
+  var KID_MAC_DINH = "gas";
+  var KID_CHON_KEY = "karofi.id.backend";
+
+  function kidChonBackend_() {
+    var chon = "";
+    try {
+      var m = /[?&]kid=(edge|gas)(?:&|$)/.exec(location.search);
+      if (m) {
+        chon = m[1];
+        try { localStorage.setItem(KID_CHON_KEY, chon); } catch (e) { /* riêng tư */ }
+      } else if (/[?&]kid=(?:&|$)/.test(location.search)) {
+        try { localStorage.removeItem(KID_CHON_KEY); } catch (e) { /* riêng tư */ }
+      } else {
+        try { chon = localStorage.getItem(KID_CHON_KEY) || ""; } catch (e) { /* riêng tư */ }
+      }
+    } catch (e) { /* location lạ — cứ dùng mặc định */ }
+    if (!chon) chon = KID_MAC_DINH;
+    // Chỉ nói khi đang chạy KHÁC mặc định: người thử cần biết mình đang ở đâu,
+    // còn người dùng bình thường không cần thấy gì cả.
+    if (chon !== KID_MAC_DINH && window.console && console.info) {
+      console.info("[Karofi ID] đang dùng backend: " + chon + " (thêm ?kid= để xoá lựa chọn)");
+    }
+    return chon === "edge" ? KID_EDGE : KID_GAS;
+  }
+
+  var KAROFI_ID_API = kidChonBackend_();
 
   var STORAGE_KEY = "karofi.session";
 
