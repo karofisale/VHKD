@@ -2262,7 +2262,9 @@
      -------------------------------------------------------------- */
   var KID_GAS  = "https://script.google.com/macros/s/AKfycbwKj1-OX7ChQMwRC6YghriZGUMseixWc8VWwOpfgXEE8Aiqpv3XUqqumewcGWppSIWQgQ/exec";
   var KID_EDGE = "https://zzbnxyvjpiuhxauagbgh.supabase.co/functions/v1/karofi-id";
-  var KID_MAC_DINH = "gas";
+  // ĐÃ CẮT LUỒNG 21/09/2026 ~13h45. Trước đó là "gas".
+  // Quay lui = đổi lại thành "gas", commit, đẩy. Không phải sửa gì ở ba app.
+  var KID_MAC_DINH = "edge";
   var KID_CHON_KEY = "karofi.id.backend";
 
   function kidChonBackend_() {
@@ -2278,7 +2280,12 @@
         try { chon = localStorage.getItem(KID_CHON_KEY) || ""; } catch (e) { /* riêng tư */ }
       }
     } catch (e) { /* location lạ — cứ dùng mặc định */ }
-    if (!chon) chon = KID_MAC_DINH;
+    // Chỉ nhận đúng hai giá trị. Không lọc ở đây thì một giá trị rác trong
+    // localStorage rơi thẳng về Apps Script thay vì về mặc định — và sau khi
+    // đã cắt luồng, điều đó nghĩa là trình duyệt ấy âm thầm ghi vào Sheet
+    // trong khi cả công ty ghi vào Postgres. Hai nguồn sự thật cùng lúc, và
+    // không có gì báo.
+    if (chon !== "edge" && chon !== "gas") chon = KID_MAC_DINH;
     // Chỉ nói khi đang chạy KHÁC mặc định: người thử cần biết mình đang ở đâu,
     // còn người dùng bình thường không cần thấy gì cả.
     if (chon !== KID_MAC_DINH && window.console && console.info) {
