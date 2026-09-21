@@ -1,7 +1,8 @@
 # Chuyển 4 trang sang Cloudflare Pages
 
-Trạng thái: **chưa chuyển**. GitHub Pages vẫn đang phục vụ. Tài liệu này là
-quy trình; làm xong tới đâu tick tới đó.
+Trạng thái: **bốn project Pages đã chạy trên `*.pages.dev` (21/09/2026)**.
+GitHub Pages vẫn phục vụ song song — chưa đụng gì tới địa chỉ người dùng đang
+dùng. Còn lại: gắn tên miền, rồi mới đóng private các kho.
 
 ## Ràng buộc quyết định mọi thứ: BỐN TRANG PHẢI CÙNG MỘT ORIGIN
 
@@ -66,12 +67,11 @@ Cả hai app Vite đều dựng với `base: './'` (đường dẫn tương đ�
 
 ## Thứ tự làm — đừng đảo
 
-1. [ ] Tạo 3 project `karofi-fc`, `karofi-oem`, `karofi-export`. Kiểm từng cái
-       mở được bằng địa chỉ `*.pages.dev` của nó.
-2. [ ] Tạo project `karofi-vhkd`. `_worker.js` tự động có hiệu lực.
-3. [ ] Kiểm trên `karofi-vhkd.pages.dev`: mở `/`, `/FC/`, `/OEM/`,
-       `/export/pi-app.html`. **Đăng nhập một lần rồi sang cả ba app** — đây là
-       phép thử thật sự, không phải việc trang có mở được hay không.
+1. [x] Tạo 3 project `karofi-fc`, `karofi-oem`, `karofi-export`.
+2. [x] Tạo project `karofi-vhkd`. `_worker.js` tự động có hiệu lực.
+3. [x] Kiểm trên `karofi-vhkd.pages.dev` — **đăng nhập một lần, sang thông cả
+       ba app**. Bộ định tuyến đúng ở mọi nhánh, gồm cả chuyển hướng và
+       trường hợp tiền tố gần giống (`/FCxyz` không rơi vào project FC).
 4. [ ] Thêm custom domain `ops.karofiglobal.com` vào project `karofi-vhkd`.
        Cloudflare đưa ra một bản ghi CNAME — gửi IT (xem mẫu dưới).
 5. [ ] Chờ chứng chỉ cấp xong, kiểm lại toàn bộ mục 3 trên tên miền thật.
@@ -83,6 +83,19 @@ Cả hai app Vite đều dựng với `base: './'` (đường dẫn tương đ�
 **Đừng làm bước 7 trước bước 5.** Đóng private là GitHub Pages tắt ngay (gói
 miễn phí không phục vụ kho private) — mất đường lùi đúng lúc chưa chắc bên mới
 đã chạy.
+
+## Hai điều đã quan sát được, không cái nào chặn
+
+**`/export/pi-app.html` đi qua một lần chuyển hướng** sang `/export/pi-app`
+(Cloudflare Pages tự bỏ đuôi `.html`), rồi mới 200. Bộ định tuyến gắn lại tiền
+tố `/export` đúng như thiết kế. Tốn thêm ~0,3 giây một lần lúc mở app; trên
+GitHub Pages không có bước này. Sửa được bằng cách đổi `href` trong
+`karofi-apps.js` thành `/export/pi-app`, nhưng phải sinh lại ba bản sao trong
+ba app — không đáng đổi cho 0,3 giây.
+
+**Đường dẫn lạ trả về trang cổng, mã 200** thay vì 404 (Pages lấy `index.html`
+làm dự phòng). Vô hại. Điều đáng quan tâm là nó KHÔNG rơi nhầm vào project nào
+— `/FCxyz` cho ra cổng chứ không cho ra FC.
 
 ## Nhờ IT thêm bản ghi
 
