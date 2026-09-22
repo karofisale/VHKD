@@ -1,8 +1,13 @@
 # Chuyển 4 trang sang Cloudflare Pages
 
-Trạng thái: **bốn project Pages đã chạy trên `*.pages.dev` (21/09/2026)**.
-GitHub Pages vẫn phục vụ song song — chưa đụng gì tới địa chỉ người dùng đang
-dùng. Còn lại: gắn tên miền, rồi mới đóng private các kho.
+Trạng thái: **ĐÃ GẮN TÊN MIỀN, kiểm xong 22/09/2026**. Tên miền thật IT dùng là
+`sales.karofiglobal.com` (không phải `ops` như dự kiến ban đầu — IT tự chọn tên
+lúc thêm CNAME). CNAME trỏ đúng `karofi-vhkd.pages.dev`, HTTPS/chứng chỉ sống,
+bộ định tuyến đúng ở mọi nhánh đã kiểm (xem mục "Đã kiểm 22/09/2026" bên dưới).
+
+GitHub Pages vẫn phục vụ song song — chưa đụng gì tới địa chỉ cũ người dùng
+đang dùng. Còn lại: báo người dùng địa chỉ mới, chạy song song ít lâu, rồi mới
+đóng private các kho.
 
 ## Ràng buộc quyết định mọi thứ: BỐN TRANG PHẢI CÙNG MỘT ORIGIN
 
@@ -21,10 +26,10 @@ thực vừa cắt sang Supabase ngày 21/09/2026. Không đáng.
 ⇒ Giữ nguyên cấu trúc đường dẫn:
 
 ```
-ops.karofiglobal.com/                    cổng VHKD
-ops.karofiglobal.com/FC/                 Sale Forecast
-ops.karofiglobal.com/OEM/                OEM Portal
-ops.karofiglobal.com/export/pi-app.html  Export Hub
+sales.karofiglobal.com/                    cổng VHKD
+sales.karofiglobal.com/FC/                 Sale Forecast
+sales.karofiglobal.com/OEM/                OEM Portal
+sales.karofiglobal.com/export/pi-app.html  Export Hub
 ```
 
 Nhờ giữ nguyên, `href` trong `Karofi-ID/web/karofi-apps.js` **không phải sửa
@@ -72,9 +77,10 @@ Cả hai app Vite đều dựng với `base: './'` (đường dẫn tương đ�
 3. [x] Kiểm trên `karofi-vhkd.pages.dev` — **đăng nhập một lần, sang thông cả
        ba app**. Bộ định tuyến đúng ở mọi nhánh, gồm cả chuyển hướng và
        trường hợp tiền tố gần giống (`/FCxyz` không rơi vào project FC).
-4. [ ] Thêm custom domain `ops.karofiglobal.com` vào project `karofi-vhkd`.
-       Cloudflare đưa ra một bản ghi CNAME — gửi IT (xem mẫu dưới).
-5. [ ] Chờ chứng chỉ cấp xong, kiểm lại toàn bộ mục 3 trên tên miền thật.
+4. [x] Thêm custom domain vào project `karofi-vhkd` — IT đặt tên
+       `sales.karofiglobal.com` (khác dự kiến `ops`, đã cập nhật tài liệu này).
+5. [x] Chứng chỉ đã cấp, kiểm lại toàn bộ mục 3 trên tên miền thật — 22/09/2026,
+       tất cả đúng: DNS, HTTPS, cả 4 trang, chuyển hướng, chống nhầm tiền tố.
 6. [ ] Báo người dùng địa chỉ mới. Giữ GitHub Pages chạy song song ít nhất
        một tuần — hai bên phục vụ cùng một nội dung, không xung đột gì.
 7. [ ] Sau khi yên: đóng private 4 kho, xoá `.github/workflows/deploy.yml` của
@@ -102,7 +108,7 @@ làm dự phòng). Vô hại. Điều đáng quan tâm là nó KHÔNG rơi nhầ
 > Nhờ team IT thêm giúp một bản ghi DNS cho tên miền `karofiglobal.com`:
 >
 > - **Loại**: CNAME
-> - **Tên**: `ops`
+> - **Tên**: `sales`
 > - **Giá trị**: `karofi-vhkd.pages.dev`
 > - **TTL**: mặc định
 >
