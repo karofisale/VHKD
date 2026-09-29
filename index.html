@@ -2811,7 +2811,9 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
       // Token bị thu hồi / hết hạn: đưa cả cổng về trạng thái chưa đăng
       // nhập, và dọn cả phiên riêng của ba app — để nguyên thì việc thu hồi
       // không có tác dụng gì trong 6 giờ tiếp theo.
-      if (/UNAUTHORIZED|hết hạn/i.test(err.message)) {
+      // Mẫu khớp ĐÚNG thông báo phiên của 4 backend ("UNAUTHORIZED: …" / "Phiên đăng nhập đã hết hạn…"),
+      // không bắt chữ "hết hạn" trơ trọi — "hết hạn mức Gemini", "PAT hết hạn"… không phải lỗi phiên (30/09/2026).
+      if (/UNAUTHORIZED|Phiên đăng nhập/i.test(err.message)) {
         clearAllAppSessions();
         xoaSoLieu();
         if (window.KID_VE_TONG_QUAN) window.KID_VE_TONG_QUAN();
