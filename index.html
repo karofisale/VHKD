@@ -2187,11 +2187,30 @@
   .kid-rowbtn:hover { background: #f2f5f8; }
   .kid-pin-out { margin-top: 10px; padding: 10px 12px; border: 1px solid #b8d8b8; background: #f2fbf2; border-radius: 8px; }
   .kid-pin-out b { font-size: 22px; letter-spacing: 3px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .kid-admin-tools { display: flex; gap: 8px; align-items: center; margin: 0 0 10px; }
+  .kid-user-modal { max-width: 760px; width: 96vw; }
+  .kid-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+  .kid-form-grid .field { margin-bottom: 10px; }
+  .kid-form-grid .kid-span { grid-column: 1 / -1; }
+  .kid-form-grid input:disabled, .kid-form-grid select:disabled { background: var(--bg-sunken); color: var(--ink-faint); }
+  .kid-checks { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 2px 0 12px; font-size: 13px; }
+  .kid-checks label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+  fieldset.kid-app { border: 1px solid var(--line); border-radius: 8px; margin: 0 0 10px; padding: 8px 12px 2px; }
+  fieldset.kid-app legend { font-size: 12.5px; font-weight: 700; padding: 0 6px; }
+  fieldset.kid-app legend label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+  fieldset.kid-app .kid-app-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+  fieldset.kid-app .kid-app-body .field { margin-bottom: 10px; }
+  fieldset.kid-app.kid-off .kid-app-body { display: none; }
+  .kid-hint { font-size: 11px; color: var(--ink-faint); margin: 2px 0 0; line-height: 1.4; }
+  .kid-rowbtn.kid-danger { color: var(--critical); border-color: #e8c4c4; }
+  @media (max-width: 640px) {
+    .kid-form-grid, fieldset.kid-app .kid-app-body { grid-template-columns: 1fr; }
+  }
 </style>
 <div class="modal-backdrop" id="kidAdminBackdrop">
   <div class="modal kid-admin-modal">
     <h3>Quản trị tài khoản</h3>
-    <p class="sub">Đặt lại PIN, mở khoá, bật/tắt tài khoản. Không có chức năng xem PIN — PIN lưu dạng băm, không đọc ngược được.</p>
+    <p class="sub">Thêm / xóa tài khoản, sửa quyền vào từng app, đặt lại PIN, mở khoá, bật/tắt. Không có chức năng xem PIN — PIN lưu dạng băm, không đọc ngược được.</p>
 
     <div class="kid-admin-pin">
       <div class="field">
@@ -2219,7 +2238,72 @@
 
     <div class="modal-actions">
       <button class="btn btn-ghost" id="kidAdminClose" type="button">Đóng</button>
-      <button class="btn btn-primary" id="kidAdminReload" type="button">Tải lại danh sách</button>
+      <button class="btn btn-ghost" id="kidAdminReload" type="button">Tải lại danh sách</button>
+      <button class="btn btn-primary" id="kidAdminAdd" type="button">+ Thêm tài khoản</button>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="kidUserBackdrop">
+  <div class="modal kid-user-modal">
+    <h3 id="kuTitle">Thêm tài khoản</h3>
+    <p class="sub" id="kuSub"></p>
+
+    <div class="kid-form-grid">
+      <div class="field"><label for="kuId">Mã tài khoản</label><input id="kuId" autocomplete="off" />
+        <p class="kid-hint">Chữ không dấu, số và . _ @ - (2–64 ký tự). Không đổi được sau khi tạo.</p></div>
+      <div class="field"><label for="kuHoTen">Họ tên</label><input id="kuHoTen" autocomplete="off" /></div>
+      <div class="field"><label for="kuEmail">Email</label><input id="kuEmail" type="email" autocomplete="off" /></div>
+      <div class="field" id="kuPinWrap"><label for="kuPin">PIN ban đầu</label><input id="kuPin" inputmode="numeric" autocomplete="off" />
+        <p class="kid-hint">Bỏ trống = hệ thống tự sinh và hiện một lần sau khi tạo.</p></div>
+      <div class="field kid-span"><label for="kuGhiChu">Ghi chú</label><input id="kuGhiChu" autocomplete="off" /></div>
+    </div>
+
+    <div class="kid-checks">
+      <label><input type="checkbox" id="kuQuanTri" /> Quản trị hệ thống (thêm / sửa quyền / xóa tài khoản)</label>
+      <label><input type="checkbox" id="kuPortal" /> Xem toàn bộ dashboard VHKD</label>
+    </div>
+
+    <fieldset class="kid-app kid-off" id="kuFcBox">
+      <legend><label><input type="checkbox" id="kuFcOn" /> Sale Forecast (FC)</label></legend>
+      <div class="kid-app-body">
+        <div class="field"><label for="kuFcTen">Tên đăng nhập FC</label><input id="kuFcTen" autocomplete="off" /></div>
+        <div class="field"><label for="kuFcVai">Vai trò</label><select id="kuFcVai"></select></div>
+        <div class="field"><label for="kuFcBu">Đơn vị (bu)</label><select id="kuFcBu"></select>
+          <p class="kid-hint">Bắt buộc với vai soạn / duyệt theo đơn vị.</p></div>
+      </div>
+    </fieldset>
+
+    <fieldset class="kid-app kid-off" id="kuOemBox">
+      <legend><label><input type="checkbox" id="kuOemOn" /> OEM</label></legend>
+      <div class="kid-app-body">
+        <div class="field"><label for="kuOemTen">Tên đăng nhập OEM</label><input id="kuOemTen" autocomplete="off" /></div>
+        <div class="field"><label for="kuOemVai">Vai trò</label><select id="kuOemVai"></select></div>
+        <div class="field"><label for="kuOemSale">Sale ID</label><input id="kuOemSale" autocomplete="off" /></div>
+      </div>
+    </fieldset>
+
+    <fieldset class="kid-app kid-off" id="kuExBox">
+      <legend><label><input type="checkbox" id="kuExOn" /> Export</label></legend>
+      <div class="kid-app-body">
+        <div class="field"><label for="kuExTen">Tên đăng nhập Export</label><input id="kuExTen" autocomplete="off" /></div>
+        <div class="field"><label for="kuExVai">Vai trò</label><select id="kuExVai"></select></div>
+        <div class="field"><label for="kuExSale">Sale ID</label><input id="kuExSale" autocomplete="off" /></div>
+        <div class="field"><label for="kuExNv">Mã nhân viên</label><input id="kuExNv" autocomplete="off" /></div>
+        <div class="field"><label for="kuExTeam">Team</label><input id="kuExTeam" autocomplete="off" list="kuExTeamDs" /><datalist id="kuExTeamDs"></datalist></div>
+      </div>
+    </fieldset>
+
+    <div class="field" style="max-width:240px">
+      <label for="kuAdminPin">PIN của bạn (xác nhận)</label>
+      <input id="kuAdminPin" type="password" inputmode="numeric" autocomplete="current-password" />
+    </div>
+    <p class="kid-note">Tên đăng nhập của một app đã cấp thì không đổi được (dữ liệu cũ gắn với tên đó). Thu hồi quyền một app: bỏ tick ô của app đó.
+      Người dùng cần đăng xuất rồi đăng nhập lại để quyền mới có hiệu lực.</p>
+    <p class="kid-msg" id="kuMsg"></p>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="kuCancel" type="button">Hủy</button>
+      <button class="btn btn-primary" id="kuSave" type="button">Lưu</button>
     </div>
   </div>
 </div>
@@ -3551,12 +3635,16 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
       c5.textContent = u.dangNhapCuoi ? String(u.dangNhapCuoi).slice(0, 16).replace("T", " ") : "chưa bao giờ";
 
       var c6 = document.createElement("td");
+      c6.appendChild(nutDong("Sửa quyền", function () { moFormSauKhiTaiMeta(u); }));
       c6.appendChild(nutDong("Đặt lại PIN", function () { datLaiPin(u); }));
       if (u.dangBiKhoa) c6.appendChild(nutDong("Mở khoá", function () { moKhoa(u); }));
       // Không hiện nút tắt cho chính mình: server chặn, nhưng nút bấm được rồi
       // mới báo lỗi là giao diện hứa một việc nó không làm.
       if (String(u.id) !== idToi) {
         c6.appendChild(nutDong(u.dangDung ? "Tắt" : "Bật", function () { batTat(u); }));
+        var xoa = nutDong("Xóa", function () { xoaTaiKhoan(u); });
+        xoa.className += " kid-danger";
+        c6.appendChild(xoa);
       }
 
       [c1, c2, c3, c4, c5, c6].forEach(function (c) { tr.appendChild(c); });
@@ -3595,6 +3683,235 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
       taiDanhSachNguoiDung(true);     // rồi vẽ lại bảng mà không đè lên nó
     })["catch"](function (err) {
       setAdminMsg(err.message, "bad");
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Thêm / sửa quyền / xóa tài khoản (06/10/2026)
+  //
+  // Mọi thao tác do server kiểm lại (cờ is_admin + PIN của người quản trị); form này chỉ thu thập dữ liệu. Danh sách vai trò /
+  // đơn vị lấy từ server (adminMeta) để khớp đúng tập mà từng app chấp nhận.
+  // ---------------------------------------------------------------
+
+  var kidMeta = null;
+  var kuDangSua = null;          // null = đang thêm; ngược lại là dòng người dùng đang sửa (từ adminListUsers)
+
+  var NHAN_VAI_FC = {
+    central_admin: "central_admin — quản trị trung tâm (mọi đơn vị)",
+    bu_editor: "bu_editor — soạn kế hoạch của đơn vị",
+    bu_approver: "bu_approver — duyệt của đơn vị",
+    viewer: "viewer — chỉ xem"
+  };
+
+  function kuMsg(text, kind) {
+    var m = $("kuMsg");
+    m.textContent = text || "";
+    m.className = "kid-msg" + (kind ? " kid-" + kind : "");
+  }
+
+  function kuDoLuaChon(sel, ds, chon, nhanFn, coRong) {
+    sel.innerHTML = "";
+    if (coRong) { var o0 = document.createElement("option"); o0.value = ""; o0.textContent = "— chọn —"; sel.appendChild(o0); }
+    var coChon = false;
+    ds.forEach(function (v) {
+      var o = document.createElement("option");
+      o.value = v.value; o.textContent = v.label || v.value;
+      if (v.value === chon) { o.selected = true; coChon = true; }
+      sel.appendChild(o);
+    });
+    // Giá trị đang có mà ngoài danh sách (người cũ): vẫn hiện để không vô tình đổi khi lưu
+    if (chon && !coChon) {
+      var o2 = document.createElement("option");
+      o2.value = chon; o2.textContent = chon + " (ngoài danh sách)"; o2.selected = true;
+      sel.appendChild(o2);
+    }
+  }
+
+  function kuBatApp(hop, bat) {
+    $(hop).classList.toggle("kid-off", !bat);
+  }
+
+  function kuDienMeta() {
+    var m = kidMeta || { vaiTro: { FC: [], OEM: [], EXPORT: [] }, donViFc: [], teamExport: [] };
+    kuDoLuaChon($("kuFcVai"), m.vaiTro.FC.map(function (v) { return { value: v, label: NHAN_VAI_FC[v] || v }; }), "viewer");
+    kuDoLuaChon($("kuOemVai"), m.vaiTro.OEM.map(function (v) { return { value: v }; }), "sale");
+    kuDoLuaChon($("kuExVai"), m.vaiTro.EXPORT.map(function (v) { return { value: v }; }), "sale");
+    kuDoLuaChon($("kuFcBu"), m.donViFc.map(function (d) { return { value: d.code, label: d.code + (d.name ? " — " + d.name : "") + (d.active ? "" : " (đã tắt)") }; }), "", null, true);
+    var dl = $("kuExTeamDs");
+    dl.innerHTML = "";
+    (m.teamExport || []).forEach(function (t) { var o = document.createElement("option"); o.value = t; dl.appendChild(o); });
+  }
+
+  function moFormTaiKhoan(u) {
+    kuDangSua = u || null;
+    kuMsg("", "");
+    var sua = !!u;
+    $("kuTitle").textContent = sua ? "Sửa quyền — " + u.id : "Thêm tài khoản";
+    $("kuSub").textContent = sua ? "Đổi họ tên, email, cờ quản trị và quyền vào từng app." : "Tạo tài khoản mới và cấp quyền vào các app.";
+    $("kuId").value = sua ? u.id : "";
+    $("kuId").disabled = sua;
+    $("kuHoTen").value = sua ? (u.hoTen || "") : "";
+    $("kuEmail").value = sua ? (u.email || "") : "";
+    $("kuGhiChu").value = sua ? (u.ghiChu || "") : "";
+    $("kuPin").value = "";
+    $("kuPinWrap").style.display = sua ? "none" : "";
+    $("kuQuanTri").checked = sua ? !!u.quanTri : false;
+    $("kuPortal").checked = sua ? !!u.portalFull : true;
+    // Tự gỡ quyền quản trị của mình bị server chặn — khoá luôn ô cho khỏi hứa một việc không làm được
+    var toi = readSession();
+    $("kuQuanTri").disabled = !!(sua && toi && toi.user && String(toi.user.id) === String(u.id));
+    $("kuAdminPin").value = adminPin();
+
+    kuDienMeta();
+    var a = (sua && u.app) || {};
+    var fc = a.FC, oem = a.OEM, ex = a.EXPORT;
+    $("kuFcOn").checked = !!fc; kuBatApp("kuFcBox", !!fc);
+    $("kuFcTen").value = fc ? fc.n : ""; $("kuFcTen").disabled = !!fc;
+    kuDoLuaChon($("kuFcVai"), ((kidMeta && kidMeta.vaiTro.FC) || []).map(function (v) { return { value: v, label: NHAN_VAI_FC[v] || v }; }), fc ? fc.r : "viewer");
+    kuDoLuaChon($("kuFcBu"), ((kidMeta && kidMeta.donViFc) || []).map(function (d) { return { value: d.code, label: d.code + (d.name ? " — " + d.name : "") + (d.active ? "" : " (đã tắt)") }; }), fc ? (fc.bu || "") : "", null, true);
+    $("kuOemOn").checked = !!oem; kuBatApp("kuOemBox", !!oem);
+    $("kuOemTen").value = oem ? oem.n : ""; $("kuOemTen").disabled = !!oem;
+    kuDoLuaChon($("kuOemVai"), ((kidMeta && kidMeta.vaiTro.OEM) || []).map(function (v) { return { value: v }; }), oem ? oem.r : "sale");
+    $("kuOemSale").value = oem ? (oem.sid || "") : "";
+    $("kuExOn").checked = !!ex; kuBatApp("kuExBox", !!ex);
+    $("kuExTen").value = ex ? ex.n : ""; $("kuExTen").disabled = !!ex;
+    kuDoLuaChon($("kuExVai"), ((kidMeta && kidMeta.vaiTro.EXPORT) || []).map(function (v) { return { value: v }; }), ex ? ex.r : "sale");
+    $("kuExSale").value = ex ? (ex.sid || "") : "";
+    $("kuExNv").value = ex ? (ex.sc || "") : "";
+    $("kuExTeam").value = ex ? (ex.team || "") : "";
+
+    $("kidUserBackdrop").classList.add("open");
+    setTimeout(function () { (sua ? $("kuHoTen") : $("kuId")).focus(); }, 30);
+  }
+
+  function dongFormTaiKhoan() {
+    $("kidUserBackdrop").classList.remove("open");
+    $("kuAdminPin").value = "";
+    $("kuPin").value = "";
+    kuMsg("", "");
+  }
+
+  function moFormSauKhiTaiMeta(u) {
+    var s = readSession();
+    if (!s) { setAdminMsg("Phiên đã hết hạn, đăng nhập lại.", "bad"); return; }
+    if (kidMeta) { moFormTaiKhoan(u); return; }
+    setAdminMsg("Đang tải danh mục vai trò...", "");
+    callApi("adminMeta", [s.token]).then(function (m) {
+      kidMeta = m;
+      setAdminMsg("", "");
+      moFormTaiKhoan(u);
+    })["catch"](function (err) { setAdminMsg(err.message, "bad"); });
+  }
+
+  /** Gom form thành khối app (đối tượng | null thu hồi | undefined bỏ qua) theo ô tick + dữ liệu đang có. */
+  function kuKhoiApp(tenApp, tick, dang, dungDoiTuong) {
+    if ($(tick).checked) return dungDoiTuong();
+    return dang ? null : undefined;
+  }
+
+  function kuThuThap() {
+    var u = kuDangSua, a = (u && u.app) || {};
+    var d = {
+      hoTen: $("kuHoTen").value.trim(),
+      email: $("kuEmail").value.trim(),
+      ghiChu: $("kuGhiChu").value.trim(),
+      quanTri: $("kuQuanTri").checked,
+      portalFull: $("kuPortal").checked
+    };
+    var fc = kuKhoiApp("FC", "kuFcOn", a.FC, function () {
+      return { ten: $("kuFcTen").value.trim(), vaiTro: $("kuFcVai").value, donVi: $("kuFcBu").value };
+    });
+    var oem = kuKhoiApp("OEM", "kuOemOn", a.OEM, function () {
+      return { ten: $("kuOemTen").value.trim(), vaiTro: $("kuOemVai").value, saleId: $("kuOemSale").value.trim() };
+    });
+    var ex = kuKhoiApp("EXPORT", "kuExOn", a.EXPORT, function () {
+      return { ten: $("kuExTen").value.trim(), vaiTro: $("kuExVai").value, saleId: $("kuExSale").value.trim(),
+        maNhanVien: $("kuExNv").value.trim(), team: $("kuExTeam").value.trim() };
+    });
+    if (fc !== undefined) d.fc = fc;
+    if (oem !== undefined) d.oem = oem;
+    if (ex !== undefined) d["export"] = ex;
+    return d;
+  }
+
+  /** Khi sửa chỉ gửi phần ĐỔI so với dữ liệu đang có — đỡ ghi thừa, và nếu không đổi gì thì báo ngay. */
+  function kuChiPhanDoi(d) {
+    var u = kuDangSua, a = u.app || {}, kq = {};
+    if (d.hoTen !== (u.hoTen || "")) kq.hoTen = d.hoTen;
+    if (d.email !== (u.email || "")) kq.email = d.email;
+    if (d.ghiChu !== (u.ghiChu || "")) kq.ghiChu = d.ghiChu;
+    if (d.quanTri !== !!u.quanTri) kq.quanTri = d.quanTri;
+    if (d.portalFull !== !!u.portalFull) kq.portalFull = d.portalFull;
+    if (d.fc === null || (d.fc && (!a.FC || d.fc.vaiTro !== a.FC.r || (d.fc.donVi || "") !== (a.FC.bu || "")))) kq.fc = d.fc;
+    if (d.oem === null || (d.oem && (!a.OEM || d.oem.vaiTro !== a.OEM.r || (d.oem.saleId || "") !== (a.OEM.sid || "")))) kq.oem = d.oem;
+    var e = a.EXPORT;
+    if (d["export"] === null || (d["export"] && (!e || d["export"].vaiTro !== e.r || (d["export"].saleId || "") !== (e.sid || "") ||
+        (d["export"].maNhanVien || "") !== (e.sc || "") || (d["export"].team || "") !== (e.team || "")))) kq["export"] = d["export"];
+    return kq;
+  }
+
+  function hienPinMoi(r, dau) {
+    var box = $("kidPinOut");
+    box.innerHTML = "";
+    var dv = document.createElement("div");
+    dv.className = "kid-pin-out";
+    var p1 = document.createElement("div");
+    p1.textContent = dau + r.id + (r.hoTen ? " (" + r.hoTen + ")" : "") + ":";
+    var p2 = document.createElement("b");
+    p2.textContent = r.pinMoi;
+    var p3 = document.createElement("div");
+    p3.style.marginTop = "6px"; p3.style.fontSize = "12px";
+    p3.textContent = r.canhBao;
+    dv.appendChild(p1); dv.appendChild(p2); dv.appendChild(p3);
+    box.appendChild(dv);
+  }
+
+  function luuFormTaiKhoan() {
+    var s = readSession();
+    if (!s) { kuMsg("Phiên đã hết hạn, đăng nhập lại.", "bad"); return; }
+    var pin = ($("kuAdminPin").value || "").trim();
+    if (!pin) { kuMsg("Nhập PIN của bạn để xác nhận.", "bad"); $("kuAdminPin").focus(); return; }
+    var d = kuThuThap();
+    var sua = !!kuDangSua;
+    var fn, args;
+    if (sua) {
+      var doi = kuChiPhanDoi(d);
+      if (!Object.keys(doi).length) { kuMsg("Không có thay đổi nào để lưu.", "warn"); return; }
+      fn = "adminUpdateUser"; args = [s.token, pin, kuDangSua.id, doi];
+    } else {
+      d.id = $("kuId").value.trim();
+      d.pin = ($("kuPin").value || "").trim();
+      if (!d.pin) delete d.pin;
+      fn = "adminCreateUser"; args = [s.token, pin, d];
+    }
+    kuMsg("Đang lưu...", "");
+    $("kuSave").disabled = true;
+    callApi(fn, args).then(function (r) {
+      $("kuSave").disabled = false;
+      $("kidAdminPin").value = pin;          // giữ PIN cho các thao tác tiếp theo trong cửa sổ quản trị
+      dongFormTaiKhoan();
+      if (sua) {
+        $("kidPinOut").innerHTML = "";
+        setAdminMsg("Đã lưu quyền của " + r.id + ". " + (r.nhac || ""), "good");
+      } else {
+        hienPinMoi(r, "Đã tạo tài khoản. PIN của ");
+        setAdminMsg("Đã tạo " + r.id + (r.khongDongBo && r.khongDongBo.length ? " (một số app chưa đồng bộ PIN: " + r.khongDongBo.join("; ") + ")" : "") + ".", "good");
+      }
+      taiDanhSachNguoiDung(true);
+    })["catch"](function (err) {
+      $("kuSave").disabled = false;
+      kuMsg(err.message, "bad");
+    });
+  }
+
+  function xoaTaiKhoan(u) {
+    var nhap = window.prompt("XÓA tài khoản " + u.id + " (" + (u.hoTen || "") + ")?\n\n"
+      + "Người này sẽ không đăng nhập được nữa; dữ liệu họ đã tạo ở các app vẫn giữ tên người tạo.\n"
+      + "Không hoàn tác được.\n\nGõ đúng mã tài khoản để xác nhận:");
+    if (nhap === null) return;
+    thaoTacQuanTri("adminDeleteUser", [u.id, String(nhap).trim()], function (r) {
+      $("kidPinOut").innerHTML = "";
+      setAdminMsg("Đã xóa " + r.id + ". " + (r.nhac || ""), "good");
     });
   }
 
@@ -3859,10 +4176,28 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
         if (e.target === adminBack) closeAdminModal();
       });
     }
+    var adminAdd = $("kidAdminAdd"), userBack = $("kidUserBackdrop");
+    if (adminAdd) adminAdd.addEventListener("click", function () { moFormSauKhiTaiMeta(null); });
+    if ($("kuCancel")) $("kuCancel").addEventListener("click", dongFormTaiKhoan);
+    if ($("kuSave")) $("kuSave").addEventListener("click", luuFormTaiKhoan);
+    if (userBack) userBack.addEventListener("click", function (e) { if (e.target === userBack) dongFormTaiKhoan(); });
+    // Tick app: mở ô nhập; cấp mới thì điền sẵn tên đăng nhập gợi ý (FC = mã tài khoản, OEM/Export = họ tên) cho người dùng sửa
+    [["kuFcOn", "kuFcBox", "kuFcTen", function () { return $("kuId").value.trim() || (kuDangSua ? kuDangSua.id : ""); }],
+     ["kuOemOn", "kuOemBox", "kuOemTen", function () { return $("kuHoTen").value.trim(); }],
+     ["kuExOn", "kuExBox", "kuExTen", function () { return $("kuHoTen").value.trim(); }]].forEach(function (b) {
+      var cb = $(b[0]);
+      if (!cb) return;
+      cb.addEventListener("change", function () {
+        kuBatApp(b[1], cb.checked);
+        var o = $(b[2]);
+        if (cb.checked && !o.disabled && !o.value) o.value = b[3]();
+      });
+    });
 
     document.addEventListener("keydown", function (e) {
       if (e.key !== "Escape") return;
       // Cửa sổ quản trị nằm trên cùng nên nó đóng trước.
+      if (userBack && userBack.classList.contains("open")) { dongFormTaiKhoan(); return; }
       if (adminBack && adminBack.classList.contains("open")) { closeAdminModal(); return; }
       if (el.backdrop.classList.contains("open")) closeModal();
     });
