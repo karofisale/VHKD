@@ -7,10 +7,15 @@
 <!-- Ứng dụng đã cài (PWA): scope "/" trong manifest cho cả bốn app cùng nằm
      trong phạm vi ứng dụng. Không có nó, Chrome coi mọi đường dẫn ngoài
      /VHKD/ là "ra khỏi ứng dụng" và chèn một thanh báo origin ở đầu cửa sổ
-     mỗi lần bấm sang FC, OEM hay Xuất khẩu. -->
+     mỗi lần bấm sang FC, OEM hay Xuất khẩu.
+     Mọi đường dẫn manifest/icon dưới đây là TƯƠNG ĐỐI: cổng chạy ở '/' trên
+     sales.karofiglobal.com nhưng ở '/VHKD/' trên GitHub Pages — đường dẫn
+     tuyệt đối '/VHKD/icon.svg' từng trả về HTML (trang cổng) trên tên miền mới. -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#00A0E9">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 
 <!-- Cùng bộ chữ với app OEM và Sale Forecast. Ba cửa sổ mở cạnh nhau mà mỗi
      cửa sổ một kiểu chữ thì trông như ba sản phẩm của ba công ty. -->

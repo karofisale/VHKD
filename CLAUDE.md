@@ -145,6 +145,14 @@ Thử trên máy: `test/portal-stub.py` bên Karofi ID giả lập cả ba backe
 cài về màn hình chính thì mở app con vẫn ở chế độ standalone. Ba app đều trỏ về
 đúng file manifest này. Đổi `scope` là ba app rơi ra khỏi cửa sổ đã cài.
 
+`start_url` và mọi `icon.src` là đường dẫn **tương đối** (11/10/2026): cổng nằm ở `/`
+trên `sales.karofiglobal.com` nhưng ở `/VHKD/` trên GitHub Pages, nên `/VHKD/icon.svg`
+tuyệt đối trả về HTML (trang cổng, 200) trên tên miền mới. Có icon PNG 192/512 và
+maskable 512 (`icon-*.png`, sinh từ `icon.svg` / `icon-maskable.svg`). `_worker.js`
+chuyển `/VHKD` và `/VHKD/*` về `/` (301, giữ `?next=`) vì lớp phiên của ba app còn
+đá người dùng về `/VHKD/`. Không có service worker — cố ý (cổng cần mạng, cache
+dễ giữ bản cũ sau deploy). Test: `Karofi-ID/test/cong-pwa.test.js`.
+
 ## Bảng màu
 
 `#00A0E9` (cyan, mảng màu và viền) + `#004E89` (navy, **chữ** màu nhấn trên nền

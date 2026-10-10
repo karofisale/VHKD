@@ -53,9 +53,28 @@ export function timDich(duongDan, bang) {
   return null;
 }
 
+/**
+ * '/VHKD' hoặc '/VHKD/...' là địa chỉ của GitHub Pages (karofisale.github.io/VHKD/),
+ * không tồn tại ở đây — cổng nằm ở gốc '/'. Nhưng lớp phiên dùng chung trong ba app
+ * (karofi-session-core.js) vẫn đá người dùng về '/VHKD/?next=...' và người dùng còn
+ * bookmark cũ. Không chuyển hướng thì Pages trả trang cổng (200) cho mọi đường dẫn lạ,
+ * kể cả '/VHKD/manifest.webmanifest' và '/VHKD/icon.svg' — tức manifest và icon trả
+ * về HTML. 301 giữ nguyên ?query (đặc biệt ?next=) và bỏ phần '/VHKD'.
+ * Chỉ khớp ở RANH GIỚI đoạn: '/VHKDxyz' không bị đụng tới.
+ */
+export function chuyenVhkd(duongDan) {
+  if (duongDan === '/VHKD') return '/';
+  if (duongDan.startsWith('/VHKD/')) return duongDan.slice('/VHKD'.length);
+  return null;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    const ve = chuyenVhkd(url.pathname);
+    if (ve !== null) return Response.redirect(url.origin + ve + url.search, 301);
+
     const dich = timDich(url.pathname);
 
     // Không thuộc app nào -> file của chính cổng.
