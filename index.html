@@ -2393,7 +2393,7 @@ const KAROFI_APPS = [
     nhan: 'Forecast',
     href: '/FC/',
     mo_ta: 'Lập và chốt kế hoạch sản lượng theo kỳ cho từng đơn vị kinh doanh.',
-    api: 'https://script.google.com/macros/s/AKfycbyyzw_uTdteqLobl6TB1DvcBxqE4BiorHFksXLx4Zc5jItQJD943vjXSynAecurccmS/exec'
+    api: 'https://zzbnxyvjpiuhxauagbgh.supabase.co/functions/v1/fc-api'   // fc-api (Edge) thay Apps Script FC đã đóng băng — 09/10/2026
   },
   {
     key: 'OEM',
@@ -2498,15 +2498,34 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
   // JSON, nên phản hồi không có khoá 'result' được coi là hỏng và thử lại.
   // ---------------------------------------------------------------
 
-  var MAX_RETRIES = 3;
+  // 09/10/2026: 60s × 3 lần thử lại là cỡ của Apps Script nguội. Edge Function
+  // (mặc định từ 21/09) trả lời ~0,3-1s, nguội ~5s — chờ 60s rồi thử thêm ba lần
+  // nghĩa là người dùng nhìn nút "Đang đăng nhập…" tới bốn phút khi mạng hỏng.
+  // Nay 15s + 1 lần thử lại, và CHỈ thử lại lượt ĐỌC: một lượt GHI (đổi PIN,
+  // thao tác quản trị) hết giờ chờ có thể đã chạy xong ở máy chủ — gửi lại là
+  // làm hai lần (đặt lại PIN hai lần = PIN hiện trên màn hình không phải PIN thật).
+  // Đường lùi ?kid=gas / KID_MAC_DINH="gas" giữ ngưỡng cũ vì Apps Script nguội thật sự mất cỡ đó.
+  var LA_GAS = KAROFI_ID_API === KID_GAS;
+  var MAX_RETRIES = 1;
   var RETRY_DELAY_MS = 1500;
-  var TIMEOUT_MS = 60000;
+  var TIMEOUT_MS = LA_GAS ? 60000 : 15000;
+  /** Hàm KHÔNG ghi gì (login chỉ ghi bộ đếm sai/last_login — gửi lại vô hại) -> được thử lại. Mọi hàm khác: không. */
+  var FN_DOC = { login: 1, me: 1, ping: 1, logout: 1, adminListUsers: 1, adminMeta: 1 };
+  /** Đổi PIN / thao tác quản trị trên Apps Script ĐÃ ĐÓNG BĂNG: ghi vào Sheet trong khi cả công ty đọc Postgres là
+   *  PIN hai nơi lệch nhau âm thầm. Đường lùi ?kid=gas chỉ để ĐĂNG NHẬP khi Edge hỏng (README: quay lui = đổi KID_MAC_DINH). */
+  var FN_GHI_CAM_TREN_GAS = { changePin: 1, adminResetPin: 1, adminUnlock: 1, adminSetActive: 1,
+    adminCreateUser: 1, adminUpdateUser: 1, adminDeleteUser: 1 };
+  var LOI_GHI_TREN_GAS = "Đang dùng máy chủ đăng nhập dự phòng (Apps Script, đã đóng băng) — "
+    + "không đổi PIN hay sửa tài khoản ở đây được, vì PIN sẽ lệch với hệ thống chính. "
+    + "Mở lại cổng không kèm ?kid=gas (hoặc thêm ?kid= để xoá lựa chọn) rồi thử lại.";
 
-  function callApi(fn, args) {
-    return attempt(fn, args || [], 0);
+  /** khiThuLai (tuỳ chọn): gọi một lần khi lượt đầu hỏng và sắp thử lại — để giao diện báo "đang thử lại". */
+  function callApi(fn, args, khiThuLai) {
+    if (LA_GAS && FN_GHI_CAM_TREN_GAS[fn]) return Promise.reject(new Error(LOI_GHI_TREN_GAS));
+    return attempt(fn, args || [], 0, khiThuLai);
   }
 
-  function attempt(fn, args, n) {
+  function attempt(fn, args, n, khiThuLai) {
     var ctrl = new AbortController();
     var timer = setTimeout(function () { ctrl.abort(); }, TIMEOUT_MS);
 
@@ -2539,9 +2558,15 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
         err.message.indexOf("__retry__") === 0 ||
         err.message.indexOf("Failed to fetch") >= 0 ||
         err.message.indexOf("NetworkError") >= 0;
-      if (retryable && n < MAX_RETRIES) {
+      if (retryable && FN_DOC[fn] && n < MAX_RETRIES) {
+        if (typeof khiThuLai === "function") { try { khiThuLai(); } catch (e) {} }
         return new Promise(function (r) { setTimeout(r, RETRY_DELAY_MS * (n + 1)); })
-          .then(function () { return attempt(fn, args, n + 1); });
+          .then(function () { return attempt(fn, args, n + 1, khiThuLai); });
+      }
+      if (err.name === "AbortError") {
+        throw new Error(FN_DOC[fn]
+          ? "Máy chủ đăng nhập không trả lời. Kiểm tra mạng rồi thử lại."
+          : "Máy chủ không trả lời kịp — thao tác CÓ THỂ đã được lưu. Tải lại trang để kiểm tra trước khi làm lại.");
       }
       throw new Error(err.message.replace("__retry__", "") ||
         "Không kết nối được máy chủ đăng nhập.");
@@ -2633,16 +2658,43 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     return b;
   }
 
+  /* ===== KIỂM ?next= (test: Karofi-ID/test/bao-mat-dot1.test.mjs cắt đúng khối này) ===== */
   /**
    * Đường quay lại app đã đá người dùng về đây, hoặc null.
    *
-   * Chỉ nhận đường dẫn nội bộ bắt đầu bằng đúng MỘT dấu "/" — không nhận
-   * "//host" hay URL tuyệt đối, tránh biến cổng thành bàn đạp chuyển người
-   * dùng ra trang ngoài.
+   * 09/10/2026: bản cũ chỉ kiểm regex /^\/[^/]/ — "?next=/\evil.com" lọt qua,
+   * vì trình duyệt coi "\" như "/" nên "/\evil.com" = "//evil.com" =
+   * https://evil.com: đăng nhập xong là bị chuyển ra trang ngoài (đã thử thật).
+   * Nay giải bằng URL thật trên origin hiện tại và đòi đủ cả ba:
+   *   - không có "\" hay ký tự điều khiển (trình duyệt tự "sửa" chúng),
+   *   - CÙNG origin với cổng,
+   *   - đường dẫn nằm trong thư mục của một app trong KAROFI_APPS (lấy từ
+   *     `href`: '/FC/', '/OEM/', '/export/'…) hoặc '/VHKD/'.
+   * Trả về đường dẫn ĐÃ CHUẨN HOÁ (pathname+search+hash) chứ không trả chuỗi
+   * gốc — "/FC/../evil" thành "/evil" và bị loại ở bước thư mục.
    */
+  function kiemNext(next, goc, apps) {
+    if (!next || typeof next !== "string") return null;
+    if (/[\\\u0000-\u001f\u007f]/.test(next)) return null;
+    if (next.charAt(0) !== "/" || next.charAt(1) === "/") return null;
+    var u;
+    try { u = new URL(next, goc); } catch (e) { return null; }
+    if (u.origin !== goc) return null;
+    var tienTo = ["/VHKD/"];
+    (apps || []).forEach(function (a) {
+      var h = String((a && a.href) || "");
+      var i = h.lastIndexOf("/");
+      if (h.charAt(0) === "/" && i > 0) tienTo.push(h.slice(0, i + 1));
+    });
+    var hop = tienTo.some(function (t) {
+      return u.pathname.indexOf(t) === 0 || u.pathname === t.slice(0, -1);
+    });
+    return hop ? u.pathname + u.search + u.hash : null;
+  }
+  /* ===== HẾT KIỂM ?next= ===== */
+
   function nextTarget() {
-    var next = new URLSearchParams(location.search).get("next");
-    return (next && /^\/[^/]/.test(next)) ? next : null;
+    return kiemNext(new URLSearchParams(location.search).get("next"), location.origin, KAROFI_APPS);
   }
 
   /**
@@ -2831,7 +2883,7 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     }
   };
 
-  var SUM_TIMEOUT_MS = 55000;
+  var SUM_TIMEOUT_MS = 20000;   // 55000 tới 09/10/2026 — xem chú thích ở batDongHoDangTai
   var SUM_RETRY = 1;
 
   /** key app -> {trangThai:'dang'|'xong'|'loi', duLieu, loi, luc} */
@@ -3039,12 +3091,12 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
   }
 
   /**
-   * SUM_TIMEOUT_MS (55s) + 1 lần thử lại là CÓ CHỦ ĐÍCH, không phải quá dài
-   * do sơ suất: đo thật trên chính URL Apps Script này cho thấy container
-   * "ngủ" có thể mất tới 84 GIÂY để hồi đáp (xem commit FC App "Goi Apps
-   * Script phai thu lai: cold start mat toi 84 giay"). Hạ ngưỡng xuống thấp
-   * hơn mức đó sẽ làm cổng BÁO LỖI SAI cho một app thực ra vẫn đang khởi
-   * động bình thường — tệ hơn hẳn việc chờ lâu.
+   * SUM_TIMEOUT_MS: 55s tới 09/10/2026, vì khi đó thẻ FC còn gọi Apps Script
+   * mà container "ngủ" có thể mất tới 84 GIÂY (commit FC App "Goi Apps Script
+   * phai thu lai: cold start mat toi 84 giay"). Nay CẢ BA thẻ gọi Edge Function
+   * (fc-api / oem-api / export-api — `api` trong karofi-apps.js), nguội cỡ 5s,
+   * nên 20s + 1 lần thử lại là đủ rộng mà không bắt người dùng nhìn ô trống cả
+   * phút khi một app hỏng thật.
    *
    * Cái thật sự thiếu không phải ngưỡng, mà là NGƯỜI DÙNG KHÔNG BIẾT vì sao
    * phải chờ lâu vậy. Đồng hồ này chỉ vẽ lại panel đang "dang" mỗi giây để
@@ -3455,7 +3507,7 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
         var chu = "Đang lấy số liệu… (" + giay + "s)";
         // Sau 10s mới nói tới chuyện "khởi động lại" — dưới ngưỡng đó gần như
         // luôn là mạng bình thường, nói sớm chỉ gây lo không cần thiết.
-        if (giay >= 10) chu += " — có thể mất tới 1 phút nếu dịch vụ mới khởi động sau một thời gian không dùng.";
+        if (giay >= 10) chu += " — máy chủ phản hồi chậm, sẽ tự thử lại một lần.";
         panel.appendChild(tao("div", "kid-sum-note", chu));
         // Khung xương giữ chỗ (.kid-sum-skel, xem CSS): không có nó, panel chỉ
         // cao bằng dòng chữ trên rồi phình đột ngột khi số/bảng về ở trạng
@@ -3960,6 +4012,8 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
 
   function openPinModal() {
     setPinMsg("", "");
+    // Đường lùi Apps Script đã đóng băng: báo trước khi người dùng gõ PIN, không đợi tới lúc bấm (callApi cũng chặn).
+    if (LA_GAS) setPinMsg(LOI_GHI_TREN_GAS, "warn");
     el.backdrop.classList.add("open");
     setTimeout(function () { el.oldPin.focus(); }, 30);
   }
@@ -3994,7 +4048,11 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     el.submit.textContent = "Đang đăng nhập…";
     setMsg("", "");
 
-    callApi("login", [u, p]).then(function (res) {
+    callApi("login", [u, p], function () {
+      // Lượt đầu hết giờ / lỗi mạng: nói ra, đừng để nút đứng im như treo.
+      el.submit.textContent = "Đang thử lại…";
+      setMsg("Máy chủ phản hồi chậm — đang thử lại…", "");
+    }).then(function (res) {
       writeSession({ token: res.token, user: res.user, expiresAt: res.expiresAt });
       el.submit.disabled = false;
       el.submit.textContent = "Đăng nhập";
@@ -4003,8 +4061,7 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
       renderAll();
       taiSoLieu();
       // Đến đây từ một app (link có ?next=/OEM/) thì quay lại đúng chỗ đó.
-      // Chỉ nhận đường dẫn nội bộ bắt đầu bằng một dấu "/" — không nhận
-      // "//host" hay URL tuyệt đối, tránh bị lợi dụng để chuyển ra ngoài.
+      // Chỉ nhận đường dẫn CÙNG origin, trong thư mục của một app — xem kiemNext.
       var next = nextTarget();
       if (next) location.href = next;
     }).catch(function (err) {
