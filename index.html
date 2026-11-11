@@ -2298,6 +2298,15 @@
       </div>
     </fieldset>
 
+    <fieldset class="kid-app kid-off" id="kuGt2Box">
+      <legend><label><input type="checkbox" id="kuGt2On" /> GT2 Portal</label></legend>
+      <div class="kid-app-body">
+        <div class="field"><label for="kuGt2Ten">Tên đăng nhập GT2</label><input id="kuGt2Ten" autocomplete="off" /></div>
+        <div class="field"><label for="kuGt2Vai">Vai trò</label><select id="kuGt2Vai"></select></div>
+        <div class="field"><label for="kuGt2Dt">Mã đối tác (chỉ vai partner / dealer)</label><input id="kuGt2Dt" autocomplete="off" placeholder="NSKX, 3T, BHT hoặc mã đại lý" /></div>
+      </div>
+    </fieldset>
+
     <div class="field" style="max-width:240px">
       <label for="kuAdminPin">PIN của bạn (xác nhận)</label>
       <input id="kuAdminPin" type="password" inputmode="numeric" autocomplete="current-password" />
@@ -2415,6 +2424,14 @@ const KAROFI_APPS = [
     href: '/export/pi-app.html',
     mo_ta: 'Lập PI, sinh chứng từ và theo dõi lô hàng xuất khẩu.',
     api: 'https://zzbnxyvjpiuhxauagbgh.supabase.co/functions/v1/export-api'   // cắt luồng Export 29/09/2026
+  },
+  {
+    key: 'GT2',
+    ten: 'GT2 Portal',
+    nhan: 'GT2',
+    href: '/GT2/',
+    mo_ta: 'Đặt hàng, theo dõi ngày giao và công nợ kênh GT2 (NSKX, 3T, BHT).',
+    api: 'https://zzbnxyvjpiuhxauagbgh.supabase.co/functions/v1/gt2-api'   // gt2-api — 11/11/2026
   }
 ];
 
@@ -2885,6 +2902,15 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
         return json;
       },
       ve: veTamEXPORT
+    },
+    GT2: {
+      than: function (token) { return { fn: "getPortalStats", args: [token] }; },
+      boc: function (json) {
+        if (json && json.error) throw new Error(json.error);
+        if (!json || !("result" in json)) throw new Error("__retry__Phản hồi không hợp lệ");
+        return json.result;
+      },
+      ve: veTamGT2
     }
   };
 
@@ -3388,6 +3414,16 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     return out;
   }
 
+  function veTamGT2(d) {
+    var hangs = [
+      hangSo("Đơn chờ Karofi duyệt", sSo(d.choDuyet), null, d.choDuyet ? "strong" : null),
+      hangSo("Đơn đang xử lý / giao", sSo(d.dangXuLy)),
+      hangSo("Hoàn thành trong tháng", sSo(d.hoanThanhThang))
+    ];
+    if (d.choXacNhanNgay !== undefined) hangs.splice(2, 0, hangSo("Dòng chờ xác nhận ngày giao", sSo(d.choXacNhanNgay), null, d.choXacNhanNgay ? "strong" : null));
+    return [nhomHang(hangs)];
+  }
+
   function nhanPhamVi(app, d) {
     if (!d || !d.phamVi) return "Toàn bộ";
     if (app.key === "FC") return "Kênh " + d.phamVi;
@@ -3649,7 +3685,7 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
 
   function nhanApp(u) {
     var ra = [];
-    ["FC", "OEM", "EXPORT"].forEach(function (k) {
+    ["FC", "OEM", "EXPORT", "GT2"].forEach(function (k) {
       var c = u.app && u.app[k];
       if (c) ra.push(k + (c.r ? ":" + c.r : ""));
     });
@@ -3789,10 +3825,11 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
   }
 
   function kuDienMeta() {
-    var m = kidMeta || { vaiTro: { FC: [], OEM: [], EXPORT: [] }, donViFc: [], teamExport: [] };
+    var m = kidMeta || { vaiTro: { FC: [], OEM: [], EXPORT: [], GT2: [] }, donViFc: [], teamExport: [] };
     kuDoLuaChon($("kuFcVai"), m.vaiTro.FC.map(function (v) { return { value: v, label: NHAN_VAI_FC[v] || v }; }), "viewer");
     kuDoLuaChon($("kuOemVai"), m.vaiTro.OEM.map(function (v) { return { value: v }; }), "sale");
     kuDoLuaChon($("kuExVai"), m.vaiTro.EXPORT.map(function (v) { return { value: v }; }), "sale");
+    kuDoLuaChon($("kuGt2Vai"), (m.vaiTro.GT2 || []).map(function (v) { return { value: v }; }), "viewer");
     kuDoLuaChon($("kuFcBu"), m.donViFc.map(function (d) { return { value: d.code, label: d.code + (d.name ? " — " + d.name : "") + (d.active ? "" : " (đã tắt)") }; }), "", null, true);
     var dl = $("kuExTeamDs");
     dl.innerHTML = "";
@@ -3821,7 +3858,7 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
 
     kuDienMeta();
     var a = (sua && u.app) || {};
-    var fc = a.FC, oem = a.OEM, ex = a.EXPORT;
+    var fc = a.FC, oem = a.OEM, ex = a.EXPORT, gt2 = a.GT2;
     $("kuFcOn").checked = !!fc; kuBatApp("kuFcBox", !!fc);
     $("kuFcTen").value = fc ? fc.n : ""; $("kuFcTen").disabled = !!fc;
     kuDoLuaChon($("kuFcVai"), ((kidMeta && kidMeta.vaiTro.FC) || []).map(function (v) { return { value: v, label: NHAN_VAI_FC[v] || v }; }), fc ? fc.r : "viewer");
@@ -3836,6 +3873,10 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     $("kuExSale").value = ex ? (ex.sid || "") : "";
     $("kuExNv").value = ex ? (ex.sc || "") : "";
     $("kuExTeam").value = ex ? (ex.team || "") : "";
+    $("kuGt2On").checked = !!gt2; kuBatApp("kuGt2Box", !!gt2);
+    $("kuGt2Ten").value = gt2 ? gt2.n : ""; $("kuGt2Ten").disabled = !!gt2;
+    kuDoLuaChon($("kuGt2Vai"), ((kidMeta && kidMeta.vaiTro.GT2) || []).map(function (v) { return { value: v }; }), gt2 ? gt2.r : "viewer");
+    $("kuGt2Dt").value = gt2 ? (gt2.pt || "") : "";
 
     $("kidUserBackdrop").classList.add("open");
     setTimeout(function () { (sua ? $("kuHoTen") : $("kuId")).focus(); }, 30);
@@ -3885,6 +3926,10 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
       return { ten: $("kuExTen").value.trim(), vaiTro: $("kuExVai").value, saleId: $("kuExSale").value.trim(),
         maNhanVien: $("kuExNv").value.trim(), team: $("kuExTeam").value.trim() };
     });
+    var gt2 = kuKhoiApp("GT2", "kuGt2On", a.GT2, function () {
+      return { ten: $("kuGt2Ten").value.trim(), vaiTro: $("kuGt2Vai").value, doiTac: $("kuGt2Dt").value.trim() };
+    });
+    if (gt2 !== undefined) d.gt2 = gt2;
     if (fc !== undefined) d.fc = fc;
     if (oem !== undefined) d.oem = oem;
     if (ex !== undefined) d["export"] = ex;
@@ -3904,6 +3949,8 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     var e = a.EXPORT;
     if (d["export"] === null || (d["export"] && (!e || d["export"].vaiTro !== e.r || (d["export"].saleId || "") !== (e.sid || "") ||
         (d["export"].maNhanVien || "") !== (e.sc || "") || (d["export"].team || "") !== (e.team || "")))) kq["export"] = d["export"];
+    var g = a.GT2;
+    if (d.gt2 === null || (d.gt2 && (!g || d.gt2.vaiTro !== g.r || (d.gt2.doiTac || "") !== (g.pt || "")))) kq.gt2 = d.gt2;
     return kq;
   }
 
@@ -4246,7 +4293,8 @@ const KAROFI_OEM_CACHE_DB = 'oem_app_cache';
     // Tick app: mở ô nhập; cấp mới thì điền sẵn tên đăng nhập gợi ý (FC = mã tài khoản, OEM/Export = họ tên) cho người dùng sửa
     [["kuFcOn", "kuFcBox", "kuFcTen", function () { return $("kuId").value.trim() || (kuDangSua ? kuDangSua.id : ""); }],
      ["kuOemOn", "kuOemBox", "kuOemTen", function () { return $("kuHoTen").value.trim(); }],
-     ["kuExOn", "kuExBox", "kuExTen", function () { return $("kuHoTen").value.trim(); }]].forEach(function (b) {
+     ["kuExOn", "kuExBox", "kuExTen", function () { return $("kuHoTen").value.trim(); }],
+     ["kuGt2On", "kuGt2Box", "kuGt2Ten", function () { return $("kuId").value.trim() || (kuDangSua ? kuDangSua.id : ""); }]].forEach(function (b) {
       var cb = $(b[0]);
       if (!cb) return;
       cb.addEventListener("change", function () {

@@ -40,7 +40,8 @@
 const DICH = [
   { tienTo: '/FC',     goc: 'https://karofi-fc.pages.dev' },
   { tienTo: '/OEM',    goc: 'https://karofi-oem.pages.dev' },
-  { tienTo: '/export', goc: 'https://karofi-export.pages.dev' }
+  { tienTo: '/export', goc: 'https://karofi-export.pages.dev' },
+  { tienTo: '/GT2',    goc: 'https://karofi-gt2.pages.dev' }
 ];
 
 /** Tìm đích theo tiền tố. Chỉ khớp ở ranh giới đoạn đường dẫn. */
